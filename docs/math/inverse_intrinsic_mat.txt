@@ -1,0 +1,84 @@
+fx = x_px / x_real * Z
+fy = y_px / y_real * Z
+
+*_px [px] (res specific)
+*_real [cm]
+Z [cm]
+=> fx, fy [px]
+
+K = [fx 0 cx]
+    [0 fy cy]
+    [0  0  1]
+
+Pi - point from the image plane
+Pi(x [px]; y [px]) => Pih = [x y 1]^T
+
+K * P = Pi (P - world point) | * K^(-1) on the left
+K^(-1) * K * P = K^(-1) * Pi
+P = K^(-1) * Pi
+
+[fx 0 cx | 1 0 0]
+[0 fy cy | 0 1 0]
+[0  0  1 | 0 0 1]
+
+[1  0  0 | 1/fx 0 -cx/fx]
+[0  1  0 | 0 1/fy -cy/fy]
+[0  0  1 | 0     0     1]
+
+K^(-1) = 
+[1/fx 0 -cx/fx]
+[0 1/fy -cy/fy]
+[0     0     1]
+
+K^(-1) * Pi = 
+[1/fx 0 -cx/fx]   [x]
+[0 1/fy -cy/fy] * [y] =
+[0     0     1]   [1]
+=
+[x / fx + 0 - cx / fx]
+[0 + y / fy - cy / fy] =
+[0    +   0    +    1]
+=
+[(x - cx) / fx]
+[(y - cy) / fy] = l, P Z l
+[      1      ]
+
+Xp = (x - cx) / fx
+Yp = (y - cy) / fy
+x,  cx [px]
+y,  cy [px]
+fx, fy [px]
+
+Xp - [px / px] => Xp - dimensionless
+Yp - analogous to Xp
+
+f(x) = |X1p| * x = -|X2p| * (x - 5)
+|X1p| * x = -|X2p| * x + 5|X2p|
+|X1p| * x + |X2p| * x = 5|X2p|
+x(|X1p| + |X2p|) = 5|X2p|
+x = 5|X2p| / (|X1p| + |X2p|)
+
+--------------------------------
+IMPORTANT FORMULA:
+x = d|X2p| / 2(|X1p| + |X2p|)
+y = f(x)
+--------------------------------
+
+Z_dist = y * dimensionless_to_world_ratio (DTWR)
+DTWR = Z_real / y_measured
+DTWR [du (dimensionless unit) === cm] => 1 du === 1 cm
+
+COMPUTATION REQUIRED:
+1. Calibrate cameras (done only once)
+	a) Find intrinsic focal lengths (Done prematurely).
+	b) Compute inverse intrinsic matrix (Done prematurely).
+	c) !! Cameras should be identical and should effectively watch the same plane,
+	i.e. their FOV planes should be parallel to said plane !!
+2. Find the lines, on which lies the real-world 3D point:
+	a) L1 = K^(-1) ^ Pi1 (non-constant, but optimized operation)
+	b) L2 = K^(-1) ^ Pi2 (non-constant, but optimized operation)
+	c) x = d|L2x| / 2(|L1x| + |L2x|) (constant === O(1))
+	d) y = |L1x| * x (constant)
+	e) Z_dist = y * DTWR{precomputed} (constant)
+
+^ This looks VERY FAST!
