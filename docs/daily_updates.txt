@@ -2,3 +2,6 @@
 as a Low-Pass Filter, to clear the frame from unnecessary details. Furthermore, the image is dilated (edges 
 overexposed) and afterwards, processed by the classifier. The resulting rectangle's position is smoothened 
 out via averaging and afterwards displayed on the GUI app.
+
+!! FOR TOMORROW (12.09.2023): Try out different techniques (not necessarily based on Convolutional NNs)
+to recognize speed limit signs (maximum and minimum) for (atleast) European roads.
