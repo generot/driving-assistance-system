@@ -41,8 +41,11 @@ while video.isOpened():
     for rect in result:
         x, y, width, height = rect
 
-        y_frame = y + 200
-        x_frame = x + 300
+        y_frame = y + len(augmented) // 2
+        x_frame = x + len(augmented[0]) // 2
+
+        x_frame += x_frame // 10
+        y_frame += y_frame // 20
 
         rect_arrlike = np.array([x_frame, y_frame, width, height])
 
@@ -51,14 +54,13 @@ while video.isOpened():
         else:
             avg_bbox = (avg_bbox + rect_arrlike) // 2
 
-        # 10% Tolerance
-        x += x // 10
-        y += y // 10
-
         #cv2.rectangle(augmented, (x, y), (x + width, y + height), (0, 255, 0))
         #cv2.rectangle(frame, (x_frame, y_frame), (x_frame + width, y_frame + height), (0, 255, 0))
 
+    print(avg_bbox)
     cv2.rectangle(frame, (avg_bbox[0], avg_bbox[1]), (avg_bbox[0] + avg_bbox[2], avg_bbox[1] + avg_bbox[3]), (0, 255, 0))
+    cv2.circle(frame, (avg_bbox[0] + avg_bbox[2] // 2, avg_bbox[1] + avg_bbox[3] // 2), 2, (0, 0, 255), 4)
+
     cv2.imshow("Sample Video", frame)
 
     if cv2.waitKey(int(1000 / FPS)) == ord('e'):
