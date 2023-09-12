@@ -5,16 +5,25 @@ import numpy as np
 
 def upper_limit_rec():
     img = cv2.imread(cv2.samples.findFile("../samples/sl_sign2.jpg"))
+    img = cv2.convertScaleAbs(img, alpha=0.7, beta=30)
 
-    b_ch, g_ch, r_ch = cv2.split(img)
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_bound = np.array([0, 100, 110])
+    upper_bound = np.array([19, 255, 255])
 
+    filtered = cv2.inRange(hsv_img, lower_bound, upper_bound)
+    blurred = cv2.GaussianBlur(filtered, (7, 7), 5)
+
+    '''
     blur1 = cv2.GaussianBlur(b_ch, (7, 7), 5)
     _, binary = cv2.threshold(blur1, 150, 255, cv2.THRESH_BINARY)
     blur2 = cv2.GaussianBlur(binary, (5, 5), 5)
-
-    dilated = cv2.dilate(blur2, (11, 11), iterations=1)
-
+    dilated = cv2.dilate(blurred, (11, 11), iterations=1)
     circles = cv2.HoughCircles(dilated, cv2.HOUGH_GRADIENT, 2, len(img) // 4, param1=300, param2=60, maxRadius=60)
+    '''
+
+    dilated = cv2.dilate(blurred, (11, 11))
+    circles = cv2.HoughCircles(dilated, cv2.HOUGH_GRADIENT, 2, len(img) // 4, param1=220, param2=60, maxRadius=40)
  
     if np.any(circles) != None:
         for i, circle in enumerate(circles):
