@@ -3,5 +3,11 @@ as a Low-Pass Filter, to clear the frame from unnecessary details. Furthermore, 
 overexposed) and afterwards, processed by the classifier. The resulting rectangle's position is smoothened 
 out via averaging and afterwards displayed on the GUI app.
 
-!! FOR TOMORROW (12.09.2023): Try out different techniques (not necessarily based on Convolutional NNs)
+!! FOR TOMORROW (11.09.2023): Try out different techniques (not necessarily based on Convolutional NNs)
 to recognize speed limit signs (maximum and minimum) for (atleast) European roads.
+
+[11.09.2023] Speed Limit (SL) Traffic Sign Recognition (SL-TSR) implemented with image thresholding and Hough transform.
+Number recognition on the sign itself still not implemented!
+
+[12.09.2023] SL-TSR improved with colour filtering instead of plain thresholding. The filtering is done in HSV
+space instead of RGB (BGR).
