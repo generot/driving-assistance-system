@@ -59,15 +59,15 @@ def stereo_image(path1, path2):
     img2 = cv2.imread(path2)
 
     #Real measurements in [cm]
-    intr_mat = calibrate_camera(img1, (150, 160), (150, 155), 400)
+    intr_mat = calibrate_camera(img1, (100, 100), (155, 155), 600)
 
     #Imaginary setup
     fx = intr_mat[0,0]
-    d = 5 #cm
+    d = 50 #cm
 
     cropped, results = classify_car_rear(img1, (100, 300), (350, 600))
 
-    disparity, normalized = compute_disparity(img1, img2)
+    #disparity, normalized = compute_disparity(img1, img2)
 
     for rect in results:
         x, y, w, h = rect
@@ -77,19 +77,17 @@ def stereo_image(path1, path2):
         min_val, max_val, min_lc, max_lc = cv2.minMaxLoc(match)
 
         upper_left = max_lc
-        bottom_right = (upper_left[0] + w, upper_left[1] + h)
 
-        disparity = upper_left[0] - x
-        depth = fx * d / disparity
-
-        print(f"Distance: {depth}\nfx: {fx}")
+        disparity = abs(upper_left[0] - (x + 350))
+        depth = (fx * d / disparity) / 100 #m
 
         cv2.rectangle(cropped, (x, y), (x + w, y + h), (0, 255, 0))
-        cv2.rectangle(img2, upper_left, bottom_right, (0, 0, 255))
+
+        cv2.putText(img1, f"Distance: {depth:.3} m", (x + 350, y + 100 - 15), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
     
-    cv2.imshow("Disparity", normalized)
+    #cv2.imshow("Disparity", normalized)
     cv2.imshow("Left Original", img1)
-    cv2.imshow("Right Original", img2)
     cv2.waitKey(0)
 
 
