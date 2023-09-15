@@ -2,19 +2,36 @@
 
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+import math
+
+from detect import classify_car_rear
 
 FPS = 60
 
-n_disp = 0
-block_sz = 21
+n_disp = 64
+block_sz = 7
 sigma = 1.5
 lmb = 8000
 
+#OOI - Object Of Interest (tuple: (width-px, height-px))
+def calibrate_camera(frame, OOI, real_measurements, dist_from_cam):
+    dims = frame.shape
+
+    cx = dims[1] // 2
+    cy = dims[0] // 2
+
+    fx = math.floor(dist_from_cam * OOI[0] / real_measurements[0])
+    fy = math.floor(dist_from_cam * OOI[1] / real_measurements[1])
+
+    #Camera intrinsic matrix
+    return np.array([
+        [fx, 0, cx],
+        [0, fy, cy],
+        [0,  0,  1]
+    ])
+
 def create_stereo_matcher():
     left = cv2.StereoBM_create(numDisparities=n_disp, blockSize=block_sz)
-    left.setTextureThreshold(10)
-
     right = cv2.ximgproc.createRightMatcher(left)
 
     wls = cv2.ximgproc.createDisparityWLSFilter(left)
@@ -23,20 +40,9 @@ def create_stereo_matcher():
 
     return (left, right, wls)
 
-def stereo_image(path1, path2):
-    img1 = cv2.imread(path1)
-    img2 = cv2.imread(path2)
-    d = 12 #cm
-
-    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-
-    print(gray1.shape)
-
-    #stereoBM = cv2.StereoBM.create(numDisparities=16, blockSize=15)
-    #stereoBM.setMinDisparity(4)
-    #stereoBM.setSpeckleRange(16)
-    #stereoBM.setSpeckleWindowSize(45)
+def compute_disparity(frame1, frame2):
+    gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
     left, right, wls = create_stereo_matcher()
 
@@ -44,15 +50,48 @@ def stereo_image(path1, path2):
     right_disp = right.compute(gray2, gray1)
 
     disparity = wls.filter(left_disp, gray1, disparity_map_right=right_disp)
-    depth = (950 * d) / disparity
-
     normalized = cv2.normalize(disparity, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-    norm2 = cv2.normalize(left_disp, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
+    return (disparity, normalized)
+
+def stereo_image(path1, path2):
+    img1 = cv2.imread(path1)
+    img2 = cv2.imread(path2)
+
+    #Real measurements in [cm]
+    intr_mat = calibrate_camera(img1, (150, 160), (150, 155), 400)
+
+    #Imaginary setup
+    fx = intr_mat[0,0]
+    d = 5 #cm
+
+    cropped, results = classify_car_rear(img1, (100, 300), (350, 600))
+
+    disparity, normalized = compute_disparity(img1, img2)
+
+    for rect in results:
+        x, y, w, h = rect
+        detected = cropped[y : y + h, x : x + w]
+
+        match = cv2.matchTemplate(img2, detected, cv2.TM_CCOEFF)
+        min_val, max_val, min_lc, max_lc = cv2.minMaxLoc(match)
+
+        upper_left = max_lc
+        bottom_right = (upper_left[0] + w, upper_left[1] + h)
+
+        disparity = upper_left[0] - x
+        depth = fx * d / disparity
+
+        print(f"Distance: {depth}\nfx: {fx}")
+
+        cv2.rectangle(cropped, (x, y), (x + w, y + h), (0, 255, 0))
+        cv2.rectangle(img2, upper_left, bottom_right, (0, 0, 255))
+    
     cv2.imshow("Disparity", normalized)
-    cv2.imshow("Depth", norm2)
     cv2.imshow("Left Original", img1)
+    cv2.imshow("Right Original", img2)
     cv2.waitKey(0)
+
 
 def stereo_video(path1, path2):
     cam1 = cv2.VideoCapture(path1)
@@ -62,30 +101,16 @@ def stereo_video(path1, path2):
         retcode, frame1 = cam1.read()
         retcode, frame2 = cam2.read()
 
+        if cv2.waitKey(1000 // FPS) == ord('e'):
+            break
+
         frame1 = cv2.resize(frame1, (640, 480))
         frame2 = cv2.resize(frame2, (640, 480))
         #frame = cv2.hconcat((frame1, frame2))
 
-        gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-        gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-
-        if cv2.waitKey(1000 // FPS) == ord('e'):
-            break
-
-        left, right, wls = create_stereo_matcher()
-
-        left_disp = left.compute(gray1, gray2)
-        right_disp = right.compute(gray2, gray1)
-
-        #disparity = wls.filter(left_disp, gray1, disparity_map_right=right_disp)
-
-        #stereoBM = cv2.StereoBM.create(numDisparities=16, blockSize=17)
-        #disparity = stereoBM.compute(gray1, gray2)
-
-        #normalized = cv2.normalize(disparity, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-        norm = cv2.normalize(right_disp, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-
-        cv2.imshow("Disparity", norm)
+        disparity, normalized = compute_disparity(frame1, frame2)
+    
+        cv2.imshow("Disparity", normalized)
 
         cv2.imshow("Cam 1", gray1)
         cv2.imshow("Cam 2", gray2)
@@ -97,5 +122,42 @@ def stereo_video(path1, path2):
 
     cv2.destroyAllWindows()
 
-stereo_image("../samples/stereo/ambush_5_left.jpg","../samples/stereo/ambush_5_right.jpg")
-#stereo_video("../samples/stereo/test_left.mp4", "../samples/stereo/test_right.mp4")
+def stereo_video_test(joined_frame):
+    dims = joined_frame.shape
+    artificial_off = 180
+
+    left_frame  = joined_frame[0 : dims[0], 0  : dims[1] // 2]
+    right_frame = joined_frame[0 : dims[0], dims[1] // 2 : dims[1]]
+
+    disparity, normalized = compute_disparity(left_frame, right_frame)
+
+    cv2.imshow("Disparity", normalized)
+    #cv2.imshow("Left frame", left_frame)
+    #cv2.imshow("Right frame", right_frame)
+
+def read_video(path, callback):
+    FPS = 20
+    vid = cv2.VideoCapture(path)
+
+    while vid.isOpened():
+        retcode, frame = vid.read()
+
+        if cv2.waitKey(1000 // FPS) == ord('e'):
+            break
+
+        callback(frame)
+
+def main():
+    #stereo_image("../samples/stereo/ambush_5_left.jpg","../samples/stereo/ambush_5_right.jpg")
+    #stereo_video("../samples/stereo/test_left.mp4", "../samples/stereo/test_right.mp4")
+
+    #Video from: 
+    #https://github.com/introlab/rtabmap/wiki/Stereo-mapping#process-a-side-by-side-stereo-video-with-calibration-example
+    #read_video("../samples/stereo/conjoined_stereo.avi", stereo_video_test)
+
+    stereo_image("../samples/stereo/left_view_car.bmp","../samples/stereo/right_view_car.bmp")
+
+    return 0
+
+if __name__ == "__main__":
+    main()

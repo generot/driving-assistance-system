@@ -11,3 +11,9 @@ Number recognition on the sign itself still not implemented!
 
 [12.09.2023] SL-TSR improved with colour filtering instead of plain thresholding. The filtering is done in HSV
 space instead of RGB (BGR).
+
+[14.09.2023] Implemented disparity map generation with OpenCV Stereo Matcher and additionally implemented a disparity
+filter for better results (i.e. a more accurate disparity map, clear of noise)
+
+[15.09.2023] Cleaned up the proof-of-concept code a bit and continued experimentation with disparity
+generation for different stereo image/video pairs.

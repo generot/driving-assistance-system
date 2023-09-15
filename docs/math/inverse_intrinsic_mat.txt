@@ -52,23 +52,7 @@ fx, fy [px]
 Xp - [px / px] => Xp - dimensionless
 Yp - analogous to Xp
 
-f(x) = |X1p| * x = -|X2p| * (x - 5)
-|X1p| * x = -|X2p| * x + 5|X2p|
-|X1p| * x + |X2p| * x = 5|X2p|
-x(|X1p| + |X2p|) = 5|X2p|
-x = 5|X2p| / (|X1p| + |X2p|)
-
---------------------------------
-IMPORTANT FORMULA:
-x = d|X2p| / 2(|X1p| + |X2p|)
-y = f(x)
---------------------------------
-
-Z_dist = y * dimensionless_to_world_ratio (DTWR)
-DTWR = Z_real / y_measured
-DTWR [du (dimensionless unit) === cm] => 1 du === 1 cm
-
-COMPUTATION REQUIRED:
+OMPUTATION REQUIRED:
 1. Calibrate cameras (done only once)
 	a) Find intrinsic focal lengths (Done prematurely).
 	b) Compute inverse intrinsic matrix (Done prematurely).
@@ -77,8 +61,9 @@ COMPUTATION REQUIRED:
 2. Find the lines, on which lies the real-world 3D point:
 	a) L1 = K^(-1) ^ Pi1 (non-constant, but optimized operation)
 	b) L2 = K^(-1) ^ Pi2 (non-constant, but optimized operation)
-	c) x = d|L2x| / 2(|L1x| + |L2x|) (constant === O(1))
-	d) y = |L1x| * x (constant)
-	e) Z_dist = y * DTWR{precomputed} (constant)
-
+	c) Classify (Haar Cascade) the car in front of the cameras (non-constant, but fast enough).
+	d) Template match classified block with the corresponding frame from the second camera (non-constant)
+	e) Find disparity between midpoints (constant)
+	f) Z = fx * d / disparity (constant)
+	
 ^ This looks VERY FAST!
