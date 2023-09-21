@@ -110,8 +110,8 @@ def stereo_video(path1, path2):
     
         cv2.imshow("Disparity", normalized)
 
-        cv2.imshow("Cam 1", gray1)
-        cv2.imshow("Cam 2", gray2)
+        cv2.imshow("Cam 1", frame1)
+        cv2.imshow("Cam 2", frame2)
 
         #cv2.imshow("Stereo", frame)
 
@@ -122,7 +122,6 @@ def stereo_video(path1, path2):
 
 def stereo_video_test(joined_frame):
     dims = joined_frame.shape
-    artificial_off = 180
 
     left_frame  = joined_frame[0 : dims[0], 0  : dims[1] // 2]
     right_frame = joined_frame[0 : dims[0], dims[1] // 2 : dims[1]]
@@ -151,9 +150,9 @@ def main():
 
     #Video from: 
     #https://github.com/introlab/rtabmap/wiki/Stereo-mapping#process-a-side-by-side-stereo-video-with-calibration-example
-    #read_video("../samples/stereo/conjoined_stereo.avi", stereo_video_test)
+    read_video("../samples/stereo/conjoined_stereo.avi", stereo_video_test)
 
-    stereo_image("../samples/stereo/left_view_car.bmp","../samples/stereo/right_view_car.bmp")
+    #stereo_image("../samples/stereo/left_view_car.bmp","../samples/stereo/right_view_car.bmp")
 
     return 0
 

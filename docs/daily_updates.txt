@@ -17,3 +17,6 @@ filter for better results (i.e. a more accurate disparity map, clear of noise)
 
 [15.09.2023] Cleaned up the proof-of-concept code a bit and continued experimentation with disparity
 generation for different stereo image/video pairs.
+
+[18.09.2023 - 21.09.2023] Created pseudo distance detection with some made-up camera parameters, paired with
+the car detection algorithm from earlier.

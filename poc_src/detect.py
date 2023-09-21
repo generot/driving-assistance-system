@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-FPS = 30
+FPS = 25
 
 classifier = cv2.CascadeClassifier("../models/cars.xml")
 closing_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
@@ -15,12 +15,15 @@ def classify_car_rear(frame, crop_y, crop_x):
     blurred = cv2.GaussianBlur(gray, (5, 5), 5)
     dilated = cv2.dilate(blurred, (5, 5))
     closing = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, closing_kernel)
+
+    detected = classifier.detectMultiScale(closing, 1.08, 3, 0, minSize=(100, 100), maxSize=(300, 300))
+    #detected = classifier.detectMultiScale(closing, 1.0006, 3, 0, (150,150))
    
-    return (augmented, classifier.detectMultiScale(augmented, 1.0006, 3, 0, (150,150)))
+    return (augmented, detected)
 
 def main():
-    video = cv2.VideoCapture("../samples/sample_florida1.mp4")
-    avg_bbox = np.zeros(4)
+    video = cv2.VideoCapture("../samples/classified/v1.mp4")
+    avg_bbox = np.zeros(4, dtype=np.int32)
 
     no_matches_threshold = 20
     no_matches_cnt = 0
@@ -31,13 +34,16 @@ def main():
         if retcode != True:
             print("An error occured.")
 
+        aspect_ratio = frame.shape[1] / frame.shape[0]
+        frame = cv2.resize(frame, (int(aspect_ratio * 720), 720))
+
         augmented, result = classify_car_rear(frame, (200, 600), (300, 600))
 
         if len(result) == 0:
             no_matches_cnt += 1
 
         if no_matches_cnt > no_matches_threshold:
-            avg_bbox = np.zeros(4, dtype=np.uint8)
+            avg_bbox = np.zeros(4, dtype=np.int32)
             no_matches_cnt = 0
 
         for rect in result:
