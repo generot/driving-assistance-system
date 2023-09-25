@@ -3,7 +3,9 @@
 import cv2
 import numpy as np
 
-FPS = 25
+from traff_sign import recognize_sl_sign
+
+FPS = 30
 
 classifier = cv2.CascadeClassifier("../models/cars.xml")
 closing_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
@@ -21,32 +23,24 @@ def classify_car_rear(frame, crop_y, crop_x):
    
     return (augmented, detected)
 
-def main():
-    video = cv2.VideoCapture("../samples/classified/v1.mp4")
-    avg_bbox = np.zeros(4, dtype=np.int32)
-
+def average_box_init():
     no_matches_threshold = 20
     no_matches_cnt = 0
 
-    while video.isOpened():
-        retcode, frame = video.read()
+    avg_bbox = np.zeros(4, dtype=np.int32)
 
-        if retcode != True:
-            print("An error occured.")
+    def get_average_box(results):
+        nonlocal no_matches_cnt
+        nonlocal avg_bbox
 
-        aspect_ratio = frame.shape[1] / frame.shape[0]
-        frame = cv2.resize(frame, (int(aspect_ratio * 720), 720))
-
-        augmented, result = classify_car_rear(frame, (200, 600), (300, 600))
-
-        if len(result) == 0:
+        if len(results) == 0:
             no_matches_cnt += 1
 
         if no_matches_cnt > no_matches_threshold:
             avg_bbox = np.zeros(4, dtype=np.int32)
             no_matches_cnt = 0
 
-        for rect in result:
+        for rect in results:
             x, y, width, height = rect
 
             rect_arrlike = np.array([x, y, width, height])
@@ -56,12 +50,45 @@ def main():
             else:
                 avg_bbox = (avg_bbox + rect_arrlike) // 2
 
-            #cv2.rectangle(augmented, (x, y), (x + width, y + height), (0, 255, 0))
-            #cv2.rectangle(frame, (x_frame, y_frame), (x_frame + width, y_frame + height), (0, 255, 0))
+        return avg_bbox
 
-        cv2.rectangle(augmented, (avg_bbox[0], avg_bbox[1]), (avg_bbox[0] + avg_bbox[2], avg_bbox[1] + avg_bbox[3]), (0, 255, 0))
+    return get_average_box
 
-        cv2.imshow("Sample Video", frame)
+def main():
+    video = cv2.VideoCapture("../samples/classified/v2.mp4")
+    get_average_box = average_box_init()
+
+    video.set(cv2.CAP_PROP_POS_MSEC, 10 * 1000)
+
+    while video.isOpened():
+        retcode, frame = video.read()
+
+        if retcode != True:
+            print("An error occured.")
+
+        aspect_ratio = frame.shape[1] / frame.shape[0]
+
+        frame = cv2.convertScaleAbs(frame, alpha=0.7, beta=30)
+        frame = cv2.resize(frame, (int(aspect_ratio * 720), 720))
+
+        car_frame, result = classify_car_rear(frame, (200, 600), (300, 600))
+        sl_frame, dilated, circles = recognize_sl_sign(frame, (200, 600))
+
+        avg = get_average_box(result)
+
+        if np.any(circles) != None:
+            for i, circle in enumerate(circles):
+                for x, y, r in circle:
+
+                    round_x = int(round(x))
+                    round_y = int(round(y))
+                    round_r = int(round(r))
+    
+                    cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
+
+        cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
+        cv2.imshow("Sample Video", sl_frame)
+        cv2.imshow("Only Red", dilated)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):
             break

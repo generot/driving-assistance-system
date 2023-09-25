@@ -20,3 +20,7 @@ generation for different stereo image/video pairs.
 
 [18.09.2023 - 21.09.2023] Created pseudo distance detection with some made-up camera parameters, paired with
 the car detection algorithm from earlier.
+
+TODO:
+    - Merge the car detection algorithm with the TSR. [DONE]
+    - Extend the TSR with kNN number recognition for SL detection.

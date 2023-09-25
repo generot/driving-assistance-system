@@ -8,8 +8,8 @@ from detect import classify_car_rear
 
 FPS = 60
 
-n_disp = 64
-block_sz = 7
+n_disp = 160
+block_sz = 21
 sigma = 1.5
 lmb = 8000
 
@@ -31,7 +31,10 @@ def calibrate_camera(frame, OOI, real_measurements, dist_from_cam):
     ])
 
 def create_stereo_matcher():
-    left = cv2.StereoBM_create(numDisparities=n_disp, blockSize=block_sz)
+    left = cv2.StereoSGBM.create(numDisparities=n_disp, blockSize=block_sz)
+    left.setSpeckleRange(50)
+    left.setSpeckleWindowSize(15)
+    #left = cv2.StereoBM_create(numDisparities=n_disp, blockSize=block_sz)
     right = cv2.ximgproc.createRightMatcher(left)
 
     wls = cv2.ximgproc.createDisparityWLSFilter(left)
@@ -51,8 +54,9 @@ def compute_disparity(frame1, frame2):
 
     disparity = wls.filter(left_disp, gray1, disparity_map_right=right_disp)
     normalized = cv2.normalize(disparity, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+    norm = cv2.normalize(left_disp, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
-    return (disparity, normalized)
+    return (disparity, norm)
 
 def stereo_image(path1, path2):
     img1 = cv2.imread(path1)
