@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from traff_sign import recognize_sl_sign
+from traff_sign import recognize_sl_sign, train_knn
 
 FPS = 30
 
@@ -56,7 +56,11 @@ def average_box_init():
 
 def main():
     video = cv2.VideoCapture("../samples/classified/v2.mp4")
+
+    last_detected_sl = 0
+
     get_average_box = average_box_init()
+    knn = train_knn()
 
     video.set(cv2.CAP_PROP_POS_MSEC, 10 * 1000)
 
@@ -83,11 +87,24 @@ def main():
                     round_x = int(round(x))
                     round_y = int(round(y))
                     round_r = int(round(r))
+
+                    square_frame = sl_frame[round_y - round_r : round_y + round_r, round_x - round_r : round_x + round_r]
     
+                    gray = cv2.cvtColor(square_frame, cv2.COLOR_BGR2GRAY)
+                    resized = cv2.resize(gray, (20, 20))
+                    reshaped = resized.reshape(-1, 400).astype(np.float32)
+    
+                    _, result, _, _ = knn.findNearest(reshaped, 7)
+                    detected_sl = np.unique(result).astype(np.int32)
+
+                    last_detected_sl = detected_sl[0]
+
                     cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
 
+        cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
-        cv2.imshow("Sample Video", sl_frame)
+
+        cv2.imshow("Sample Video", frame)
         cv2.imshow("Only Red", dilated)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):

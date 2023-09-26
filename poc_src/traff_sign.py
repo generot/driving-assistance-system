@@ -32,24 +32,32 @@ def recognize_sl_sign(frame, crop_y):
 
     return augmented, dilated, circles
 
+def read_train_data(dataset_path, bounds):
+    def read_and_resize(path):
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        return cv2.resize(img, (20, 20))
+
+    paths = glob(dataset_path)
+
+    image_paths = { path: glob(f"{path}/*")[bounds[0] : bounds[1]] for path in paths }
+    images = { re.findall(r".*?(\d+)", path)[0] : [read_and_resize(name) for name in image_paths[path]] for path in paths }
+
+    return images
+
 def train_knn():
-    paths = glob("../models/signs/20x20/*.png")
+    bounds = (30, 180)
+    images = read_train_data("../models/signs/gtsrb/*", bounds)
 
-    train_labels = [re.findall(r"(\w+)-1\.png", path)[0] for path in paths]
-    train_data = [cv2.imread(path, cv2.IMREAD_GRAYSCALE) for path in paths]
+    train_labels = list(images.keys())
+    train_data = [images[key] for key in train_labels]
 
-    train = np.array(train_data)
-    train = train.reshape(-1, 400).astype(np.float32)
-
-    train_labels = np.array(train_labels).astype(np.float32)[:,np.newaxis]
+    train = np.array(train_data).reshape(-1, 400).astype(np.float32)
+    train_labels = np.array(train_labels).repeat(bounds[1] - bounds[0]).astype(np.float32)[:,np.newaxis]
 
     knn = cv2.ml.KNearest.create()
     knn.train(train, cv2.ml.ROW_SAMPLE, train_labels)
 
     return knn
-
-    #test = np.array(train_data[5]).reshape(-1, 400).astype(np.float32)
-    #ret, result, nbs, dist = knn.findNearest(test, 3)
 
 def upper_limit_rec():
     img = cv2.imread(cv2.samples.findFile("../samples/sl_sign2.jpg"))
@@ -72,10 +80,10 @@ def upper_limit_rec():
                 resized = cv2.resize(gray, (20, 20))
                 reshaped = resized.reshape(-1, 400).astype(np.float32)
     
-                _, result, _, _ = knn.findNearest(reshaped, 3)
+                _, result, _, _ = knn.findNearest(reshaped, 7)
 
                 cv2.circle(img, (round_x, round_y), round_r, (0, 255, 0), 2)
-                print(np.unique(result))
+                print(np.unique(result, return_counts=True))
 
                 #cv2.imshow(f"Circle #{i}", square_frame)
                 #cv2.waitKey(0)
@@ -86,4 +94,4 @@ def upper_limit_rec():
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-upper_limit_rec()
+#upper_limit_rec()
