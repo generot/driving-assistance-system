@@ -45,7 +45,7 @@ def read_train_data(dataset_path, bounds):
     return images
 
 def train_knn():
-    bounds = (30, 180)
+    bounds = (30, 200)
     images = read_train_data("../models/signs/gtsrb/*", bounds)
 
     train_labels = list(images.keys())

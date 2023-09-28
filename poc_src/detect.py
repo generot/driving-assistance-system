@@ -55,7 +55,7 @@ def average_box_init():
     return get_average_box
 
 def main():
-    video = cv2.VideoCapture("../samples/classified/v2.mp4")
+    video = cv2.VideoCapture("../samples/classified/v3.mp4")
 
     last_detected_sl = 0
 
@@ -90,14 +90,15 @@ def main():
 
                     square_frame = sl_frame[round_y - round_r : round_y + round_r, round_x - round_r : round_x + round_r]
     
-                    gray = cv2.cvtColor(square_frame, cv2.COLOR_BGR2GRAY)
-                    resized = cv2.resize(gray, (20, 20))
-                    reshaped = resized.reshape(-1, 400).astype(np.float32)
+                    if 0 not in np.shape(square_frame):
+                        gray = cv2.cvtColor(square_frame, cv2.COLOR_BGR2GRAY)
+                        resized = cv2.resize(gray, (20, 20))
+                        reshaped = resized.reshape(-1, 400).astype(np.float32)
     
-                    _, result, _, _ = knn.findNearest(reshaped, 7)
-                    detected_sl = np.unique(result).astype(np.int32)
+                        _, result, _, _ = knn.findNearest(reshaped, 7)
+                        detected_sl = np.unique(result).astype(np.int32)
 
-                    last_detected_sl = detected_sl[0]
+                        last_detected_sl = detected_sl[0]
 
                     cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
 

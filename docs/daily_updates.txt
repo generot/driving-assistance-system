@@ -23,4 +23,10 @@ the car detection algorithm from earlier.
 
 TODO:
     - Merge the car detection algorithm with the TSR. [DONE]
-    - Extend the TSR with kNN number recognition for SL detection.
+    - Extend the TSR with kNN number recognition for SL detection. [DONE]
+
+[22.09.2023 - 28.09.2023] Made a simplistic car throttle simulation for the PoC PID controller and started implementing the PID-ctrl further.
+
+BUGS:
+    - The TSR sometimes classifies random red dots as SL signs, maybe we have to filter the entire color scheme of the sign???
+    - The program crashesh when a frame after the last one is pulled, add a check for this!
