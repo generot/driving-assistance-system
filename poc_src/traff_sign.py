@@ -79,7 +79,6 @@ def train_knn():
     #images = read_train_data("../models/signs/gtsrb/*", bounds)
     images = read_train_data("../models/signs/digits/*", bounds)
 
-    #The keys are fucking up everything, fix this!!!
     train_labels = list(images.keys())
 
     del train_labels[4]
@@ -95,8 +94,16 @@ def train_knn():
 
     return knn
 
-def save_for_training():
-    pass
+
+def save_for_training(digit_frame):
+    some_arr = np.arange(10)
+
+    cv2.imshow("Digit", digit_frame)
+    np.random.shuffle(some_arr)
+
+    ident = chr(cv2.waitKey(0))
+    cv2.imwrite(f"../models/signs/digits/{ident}/" + "".join(some_arr.astype(str)) + ".png", digit_frame)
+
 
 def upper_limit_rec():
     #img = cv2.imread(cv2.samples.findFile("../samples/sl_sign2.jpg"))
@@ -107,8 +114,6 @@ def upper_limit_rec():
 
     knn = train_knn()
     augmented, dilated, circles = recognize_sl_sign(img, (0, img.shape[0]))
-
-    some_arr = np.arange(10)
 
     if np.any(circles) != None:
         for i, circle in enumerate(circles):
@@ -163,15 +168,8 @@ def upper_limit_rec():
                     _, result, _, _ = knn.findNearest(reshaped, 7)
                     print(np.unique(result))
 
-                    '''
-                    cv2.imshow("Digit", digit_frame)
-
-                    np.random.shuffle(some_arr)
-
-                    ident = chr(cv2.waitKey(0))
-                    cv2.imwrite(f"../models/signs/digits/{ident}/" + "".join(some_arr.astype(str)) + ".png", digit_frame)
-                    '''
-
+                    #save_for_training(digit_frame)
+    
                     cv2.destroyAllWindows()
 
                 cv2.imshow(f"Circle #{i}", threshold)
