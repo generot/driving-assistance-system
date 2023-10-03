@@ -54,6 +54,33 @@ def average_box_init():
 
     return get_average_box
 
+def recognize_sign_digits(knn, gray):
+    blur = cv2.GaussianBlur(gray, (5, 5), 1)
+    threshold = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 13, 4)
+
+    cnts, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    filtered_contours = [cv2.boundingRect(x) for x in cnts if cv2.contourArea(x) > 100.0]
+    sorted_contours = sorted(filtered_contours, key=lambda i: i[0])
+
+    digits = []
+
+    for cnt in sorted_contours:
+        x, y, w, h = cnt
+
+        digit_frame = threshold[y : y + h, x : x + w]
+
+        resized = cv2.resize(digit_frame, (20, 20))
+        reshaped = resized.reshape(-1, 400).astype(np.float32)
+    
+        _, result, _, _ = knn.findNearest(reshaped, 7)
+        int_result = np.unique(result).astype(np.int32)
+
+        digits.append(str(int_result[0]))
+        print(int_result)
+
+    return "".join(digits)
+
 def main():
     video = cv2.VideoCapture("../samples/classified/v3.mp4")
 
@@ -62,18 +89,19 @@ def main():
     get_average_box = average_box_init()
     knn = train_knn()
 
-    video.set(cv2.CAP_PROP_POS_MSEC, 10 * 1000)
+    video.set(cv2.CAP_PROP_POS_MSEC, 30 * 1000)
 
     while video.isOpened():
         retcode, frame = video.read()
 
         if retcode != True:
-            print("An error occured.")
+            break
 
         aspect_ratio = frame.shape[1] / frame.shape[0]
+        res_mult = 720
 
-        frame = cv2.convertScaleAbs(frame, alpha=0.7, beta=30)
-        frame = cv2.resize(frame, (int(aspect_ratio * 720), 720))
+        frame = cv2.convertScaleAbs(frame, alpha=0.7, beta=40)
+        frame = cv2.resize(frame, (int(aspect_ratio * res_mult), res_mult))
 
         car_frame, result = classify_car_rear(frame, (200, 600), (300, 600))
         sl_frame, dilated, circles = recognize_sl_sign(frame, (200, 600))
@@ -92,13 +120,10 @@ def main():
     
                     if 0 not in np.shape(square_frame):
                         gray = cv2.cvtColor(square_frame, cv2.COLOR_BGR2GRAY)
-                        resized = cv2.resize(gray, (20, 20))
-                        reshaped = resized.reshape(-1, 400).astype(np.float32)
-    
-                        _, result, _, _ = knn.findNearest(reshaped, 7)
-                        detected_sl = np.unique(result).astype(np.int32)
-
-                        last_detected_sl = detected_sl[0]
+                        resized = cv2.resize(gray, (50, 50))
+                        
+                        last_detected_sl = recognize_sign_digits(knn, resized)
+                        print(last_detected_sl)
 
                     cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
 
