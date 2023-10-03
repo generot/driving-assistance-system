@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from traff_sign import recognize_sl_sign, train_knn
+from traff_sign import recognize_sl_sign, recognize_sign_digits ,train_knn
 
 FPS = 30
 
@@ -53,33 +53,6 @@ def average_box_init():
         return avg_bbox
 
     return get_average_box
-
-def recognize_sign_digits(knn, gray):
-    blur = cv2.GaussianBlur(gray, (5, 5), 1)
-    threshold = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 13, 4)
-
-    cnts, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    filtered_contours = [cv2.boundingRect(x) for x in cnts if cv2.contourArea(x) > 100.0]
-    sorted_contours = sorted(filtered_contours, key=lambda i: i[0])
-
-    digits = []
-
-    for cnt in sorted_contours:
-        x, y, w, h = cnt
-
-        digit_frame = threshold[y : y + h, x : x + w]
-
-        resized = cv2.resize(digit_frame, (20, 20))
-        reshaped = resized.reshape(-1, 400).astype(np.float32)
-    
-        _, result, _, _ = knn.findNearest(reshaped, 7)
-        int_result = np.unique(result).astype(np.int32)
-
-        digits.append(str(int_result[0]))
-        print(int_result)
-
-    return "".join(digits)
 
 def main():
     video = cv2.VideoCapture("../samples/classified/v3.mp4")
