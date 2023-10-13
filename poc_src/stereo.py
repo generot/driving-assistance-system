@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 import math
 
-from detect import classify_car_rear
+from detect import classify_car_rear, average_box_init
 
-FPS = 60
+FPS = 20
 
 n_disp = 160
 block_sz = 21
@@ -14,11 +14,9 @@ sigma = 1.5
 lmb = 8000
 
 #OOI - Object Of Interest (tuple: (width-px, height-px))
-def calibrate_camera(frame, OOI, real_measurements, dist_from_cam):
-    dims = frame.shape
-
-    cx = dims[1] // 2
-    cy = dims[0] // 2
+def calibrate_camera(frame_dim, OOI, real_measurements, dist_from_cam):
+    cx = frame_dim[1] // 2
+    cy = frame_dim[0] // 2
 
     fx = math.floor(dist_from_cam * OOI[0] / real_measurements[0])
     fy = math.floor(dist_from_cam * OOI[1] / real_measurements[1])
@@ -58,46 +56,79 @@ def compute_disparity(frame1, frame2):
 
     return (disparity, norm)
 
+
 def stereo_image(path1, path2):
     img1 = cv2.imread(path1)
     img2 = cv2.imread(path2)
 
     #Real measurements in [cm]
-    intr_mat = calibrate_camera(img1, (100, 100), (155, 155), 600)
+    intr_mat = calibrate_camera(img1.shape, (200, 200), (150, 150), 800)
+    global get_average_box
+
+    get_average_box = average_box_init()
 
     #Imaginary setup
     fx = intr_mat[0,0]
-    d = 50 #cm
+    d = 60 #cm
 
-    cropped, results = classify_car_rear(img1, (100, 300), (350, 600))
+    stereo(img1, img2, fx, d)
+    cv2.waitKey()
+
+def stereo(img1, img2, fx, d):    
+    ROI_y = (400, 700)
+    ROI_x = (400, 800)
+
+    cropped, results = classify_car_rear(img1, ROI_y, ROI_x)
+    #cropped, results = classify_car_rear(img1, (100, 400), (350, 700))
 
     #disparity, normalized = compute_disparity(img1, img2)
 
-    for rect in results:
-        x, y, w, h = rect
+    x, y, w, h = get_average_box([ np.mean(results, axis=0, dtype=np.int32) ])
+
+    #print(results, rect)
+
+    if w > 0 and h > 0:
         detected = cropped[y : y + h, x : x + w]
 
         match = cv2.matchTemplate(img2, detected, cv2.TM_CCOEFF)
+
+        cv2.normalize(match, match, 0, 1, cv2.NORM_MINMAX, -1)
         min_val, max_val, min_lc, max_lc = cv2.minMaxLoc(match)
 
-        upper_left = max_lc
+        upper_left = (max_lc[0] + 5, max_lc[1])
 
-        disparity = abs(upper_left[0] - (x + 350))
+        disparity = (x + ROI_x[0]) - upper_left[0]
+        print(disparity, upper_left, (x + ROI_x[0], y))
         depth = (fx * d / disparity) / 100 #m
 
-        cv2.rectangle(cropped, (x, y), (x + w, y + h), (0, 255, 0))
+        #print(disparity)
 
-        cv2.putText(img1, f"Distance: {depth:.3} m", (x + 350, y + 100 - 15), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
+        cv2.rectangle(img1, (x + ROI_x[0], y + ROI_y[0]), (x + ROI_x[0] + w, y + ROI_y[0] + h), (0, 0, 255))
+
+        cv2.putText(img1, f"Distance: {depth:.3} m", (x + ROI_x[0], y + ROI_y[0] - 10), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
     
     #cv2.imshow("Disparity", normalized)
     cv2.imshow("Left Original", img1)
-    cv2.waitKey(0)
+    cv2.imshow("cropped", cropped)
+    #cv2.waitKey(0)
 
 
-def stereo_video(path1, path2):
+def stereo_video(path1, path2, del1=0, del2=0):
     cam1 = cv2.VideoCapture(path1)
     cam2 = cv2.VideoCapture(path2)
+
+    cam1.set(cv2.CAP_PROP_POS_MSEC, del1)
+    cam2.set(cv2.CAP_PROP_POS_MSEC, del2)
+
+    mat = calibrate_camera((720, 1280), (506, 305), (170, 140), 200)
+
+    global get_average_box
+
+    get_average_box = average_box_init()
+
+    fx = mat[0, 0] * 2
+    d = 18.5 #cm
 
     while cam1.isOpened() and cam2.isOpened():
         retcode, frame1 = cam1.read()
@@ -106,16 +137,18 @@ def stereo_video(path1, path2):
         if cv2.waitKey(1000 // FPS) == ord('e'):
             break
 
-        frame1 = cv2.resize(frame1, (640, 480))
-        frame2 = cv2.resize(frame2, (640, 480))
+        frame1 = cv2.resize(frame1, (1280, 720))
+        frame2 = cv2.resize(frame2, (1280, 720))
         #frame = cv2.hconcat((frame1, frame2))
 
-        disparity, normalized = compute_disparity(frame1, frame2)
+        #disparity, normalized = compute_disparity(frame1, frame2)
     
-        cv2.imshow("Disparity", normalized)
+        #cv2.imshow("Disparity", normalized)
+        stereo(frame1, frame2, fx, d)
 
-        cv2.imshow("Cam 1", frame1)
-        cv2.imshow("Cam 2", frame2)
+        #cv2.imshow("Cam 1", frame1)
+        #cv2.imshow("Cam 2", frame2)
+        #cv2.waitKey()
 
         #cv2.imshow("Stereo", frame)
 
@@ -154,8 +187,9 @@ def main():
 
     #Video from: 
     #https://github.com/introlab/rtabmap/wiki/Stereo-mapping#process-a-side-by-side-stereo-video-with-calibration-example
-    read_video("../samples/stereo/conjoined_stereo.avi", stereo_video_test)
-
+    #read_video("../samples/stereo/conjoined_stereo.avi", stereo_video_test)
+    
+    stereo_video("../samples/classified/stereo/2L.mp4", "../samples/classified/stereo/2R.mp4", del1=(26 * 1000 + 500))
     #stereo_image("../samples/stereo/left_view_car.bmp","../samples/stereo/right_view_car.bmp")
 
     return 0

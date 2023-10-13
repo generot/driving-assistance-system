@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from traff_sign import recognize_sl_sign, recognize_sign_digits ,train_knn
+from traff_sign import recognize_sl_sign, recognize_sign_digits, train_knn
 
 FPS = 30
 
@@ -13,12 +13,14 @@ closing_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
 def classify_car_rear(frame, crop_y, crop_x):
     augmented = frame[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
 
+    augmented = cv2.convertScaleAbs(augmented, alpha=1.7, beta=40)
+
     gray = cv2.cvtColor(augmented, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 5)
-    dilated = cv2.dilate(blurred, (5, 5))
+    dilated = cv2.dilate(blurred, (5, 5), iterations=3)
     closing = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, closing_kernel)
 
-    detected = classifier.detectMultiScale(closing, 1.08, 3, 0, minSize=(100, 100), maxSize=(300, 300))
+    detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
     #detected = classifier.detectMultiScale(closing, 1.0006, 3, 0, (150,150))
    
     return (augmented, detected)
@@ -55,7 +57,7 @@ def average_box_init():
     return get_average_box
 
 def main():
-    video = cv2.VideoCapture("../samples/classified/v3.mp4")
+    video = cv2.VideoCapture("../samples/classified/night.mp4")
 
     last_detected_sl = 0
 
@@ -76,15 +78,18 @@ def main():
         frame = cv2.convertScaleAbs(frame, alpha=0.7, beta=40)
         frame = cv2.resize(frame, (int(aspect_ratio * res_mult), res_mult))
 
-        car_frame, result = classify_car_rear(frame, (200, 600), (300, 600))
+        car_frame, result = classify_car_rear(frame, (200, 600), (700, 1000))
         sl_frame, dilated, circles = recognize_sl_sign(frame, (200, 600))
 
         avg = get_average_box(result)
 
+        avg = avg + np.array([700, 200, 0, 0], dtype=np.int32)
+
+        print(avg)
+
         if np.any(circles) != None:
             for i, circle in enumerate(circles):
                 for x, y, r in circle:
-
                     round_x = int(round(x))
                     round_y = int(round(y))
                     round_r = int(round(r))
@@ -101,10 +106,10 @@ def main():
                     cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
 
         cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
+        cv2.rectangle(frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
         cv2.imshow("Sample Video", frame)
-        cv2.imshow("Only Red", dilated)
+        cv2.imshow("Only Red", car_frame)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):
             break

@@ -106,8 +106,8 @@ def save_for_training(digit_frame):
 
 
 def upper_limit_rec():
-    #img = cv2.imread(cv2.samples.findFile("../samples/sl_sign2.jpg"))
-    img = cv2.imread("../models/signs/gtsrb/120/00008_00001_00027.png")
+    img = cv2.imread(cv2.samples.findFile("../samples/sl_sign2.jpg"))
+    #img = cv2.imread("../models/signs/gtsrb/120/00008_00001_00027.png")
     #img = cv2.imread("../models/signs/gtsrb/60/00003_00032_00013.png")
     #img = cv2.imread("../models/signs/gtsrb/100/00007_00042_00023.png")
     img = cv2.convertScaleAbs(img, alpha=0.7, beta=30)
@@ -118,8 +118,7 @@ def upper_limit_rec():
     if np.any(circles) != None:
         for i, circle in enumerate(circles):
             for x, y, r in circle:
-
-                scale = 1.8
+                scale = 1.5
 
                 round_x = int(round(x))
                 round_y = int(round(y))
@@ -140,7 +139,7 @@ def upper_limit_rec():
                 _, result, _, _ = knn.findNearest(reshaped, 7)
                 '''
 
-                #cv2.circle(img, (round_x, round_y), round_r, (0, 255, 0), 2)
+                cv2.circle(img, (round_x, round_y), round_r, (0, 255, 0), 2)
                 #print(np.unique(result, return_counts=True))
                 
                 #resized = cv2.resize(gray, (50, 50))
@@ -172,7 +171,7 @@ def upper_limit_rec():
     
                     cv2.destroyAllWindows()
 
-                cv2.imshow(f"Circle #{i}", threshold)
+                #cv2.imshow(f"Circle #{i}", threshold)
                 
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
@@ -183,4 +182,5 @@ def upper_limit_rec():
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-upper_limit_rec()
+if __name__ == "__main__":
+    upper_limit_rec()
