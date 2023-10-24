@@ -1,0 +1,36 @@
+[08.09.2023] Made very basic car rear detection with Haar Cascade classification. The Gaussian Blur functions 
+as a Low-Pass Filter, to clear the frame from unnecessary details. Furthermore, the image is dilated (edges 
+overexposed) and afterwards, processed by the classifier. The resulting rectangle's position is smoothened 
+out via averaging and afterwards displayed on the GUI app.
+
+!! FOR TOMORROW (11.09.2023): Try out different techniques (not necessarily based on Convolutional NNs)
+to recognize speed limit signs (maximum and minimum) for (atleast) European roads.
+
+[11.09.2023] Speed Limit (SL) Traffic Sign Recognition (SL-TSR) implemented with image thresholding and Hough transform.
+Number recognition on the sign itself still not implemented!
+
+[12.09.2023] SL-TSR improved with colour filtering instead of plain thresholding. The filtering is done in HSV
+space instead of RGB (BGR).
+
+[14.09.2023] Implemented disparity map generation with OpenCV Stereo Matcher and additionally implemented a disparity
+filter for better results (i.e. a more accurate disparity map, clear of noise)
+
+[15.09.2023] Cleaned up the proof-of-concept code a bit and continued experimentation with disparity
+generation for different stereo image/video pairs.
+
+[18.09.2023 - 21.09.2023] Created pseudo distance detection with some made-up camera parameters, paired with
+the car detection algorithm from earlier.
+
+[22.09.2023 - 28.09.2023] Made a simplistic car throttle simulation for the PoC PID controller and started implementing the PID-ctrl further.
+
+[03.10.2023] Implemented the digit recognizer and coupled it with the overall detection scheme.
+
+TODO:
+    - Merge the car detection algorithm with the TSR. [DONE]
+    - Extend the TSR with kNN number recognition for SL detection. [DONE]
+
+BUGS:
+    - The TSR sometimes classifies random red dots as SL signs, maybe we have to filter the entire color scheme of the sign??? [FIXED]
+    - The digit classifier sometimes wrongly recognizes a contour of a 'third digit' even though there are only
+      two digits on the detected sign. Investigate this further!
+    - The program crashesh when a frame after the last one is pulled, add a check for this!

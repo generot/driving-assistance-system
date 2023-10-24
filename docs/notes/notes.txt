@@ -1,0 +1,51 @@
+Camera 1 - CSI => 15 pins / 1 mm
+
+IO Board - CSI => 22 pins / 0.5 mm
+
+Pinout: https://forums.raspberrypi.com/viewtopic.php?t=156098
+15-22 adapter: 
+	- https://www.amazon.com/Arducam-Raspberry-Camera-Ribbon-Extension/dp/B085RW9K13?ref_=ast_sto_dp
+	- https://www.berrybase.de/en/flexkabel-fuer-raspberry-pi-zero-und-kameramodul?c=338
+	- https://eckstein-shop.de/WaveshareCameraRibbonCable15cmBandkabelforRaspberryPiZero2FZeroW?googlede=1&ws_oss_lieferland=DE&msclkid=d44a7ae822d41b5c43c11fc64ae6f843
+	- https://thepihut.com/products/raspberry-pi-zero-camera-adapter
+	- https://www.conrad.de/de/p/flexkabel-fuer-raspberry-pi-zero-und-kameramodul-laenge-15-cm-847874523.html#productDescription
+
+40-pin to HDMI:
+	- https://core-electronics.com.au/tfp401-hdmi-dvi-decoder-to-40-pin-ttl-breakout-without-touch.html
+
+Battery 3V CR2032
+
+OBD-II:
+	- https://elimex.bg/product/85556-konektor-obd-2-16pin-wty0160
+	- https://www.tme.eu/bg/katalog/servizno-oborudvane_112607/?queryPhrase=OBD
+
+Box:
+	- https://www.tme.eu/en/details/g287/multipurpose-enclosures/gainta/
+	- https://www.tme.eu/bg/en/details/g396/multipurpose-enclosures/gainta/
+	- https://www.tme.eu/en/details/cp-11-5/multipurpose-enclosures/combiplast/
+	- https://www.tme.eu/bg/en/details/1sl0854a00/multipurpose-enclosures/abb/
+
+	- https://store.comet.bg/Catalogue/Product/52873/ (V)
+	- https://store.comet.bg/Catalogue/Product/5765/
+
+Button:
+	- https://store.comet.bg/Catalogue/Product/5511918/
+	- https://store.comet.bg/Catalogue/Product/46351/
+	- Cap: https://store.comet.bg/Catalogue/Product/44215/#e30%3D
+
+FAN:
+	- https://www.mouser.bg/ProductDetail/Seeed-Studio/114070161?qs=TuK3vfAjtkXtgDd7IWY4BQ%3D%3D
+	- Решетка: https://store.comet.bg/Catalogue/Product/43406/
+
+Notes:
+	- Add new blocks to the block scheme.
+	- Make an electrical scheme and a PCB scheme of all outer hardware components.
+	- Check DSI and CSI connectors sides (since they flip).
+
+LED Driver:
+	- https://www.mouser.de/ProductDetail/Texas-Instruments/TPS92511DDA?qs=7GxONfNUZSjoAzN2vq80VQ%3D%3D
+
+Level Shifter:
+	- https://www.mouser.de/ProductDetail/Texas-Instruments/TXU0202QDCURQ1?qs=T%252BzbugeAwjilAEnL3sZS6Q%3D%3D
+
+
