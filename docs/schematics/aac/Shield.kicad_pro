@@ -34,9 +34,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 0.0,
+          "height": 2.2,
+          "width": 1.8
         },
         "silk_line_width": 0.09999999999999999,
         "silk_text_italic": false,
@@ -45,10 +45,21 @@
         "silk_text_thickness": 0.09999999999999999,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "min_clearance": 0.3
         }
       },
-      "diff_pair_dimensions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        },
+        {
+          "gap": 0.3,
+          "via_gap": 0.4,
+          "width": 0.3
+        }
+      ],
       "drc_exclusions": [],
       "meta": {
         "version": 2
@@ -105,20 +116,20 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.0,
+        "min_clearance": 0.127,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.5,
-        "min_hole_clearance": 0.25,
-        "min_hole_to_hole": 0.25,
-        "min_microvia_diameter": 0.19999999999999998,
-        "min_microvia_drill": 0.09999999999999999,
+        "min_hole_clearance": 0.254,
+        "min_hole_to_hole": 0.5,
+        "min_microvia_diameter": 0.0,
+        "min_microvia_drill": 0.0,
         "min_resolved_spokes": 2,
-        "min_silk_clearance": 0.0,
-        "min_text_height": 0.7999999999999999,
-        "min_text_thickness": 0.08,
-        "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.0,
-        "min_via_annular_width": 0.09999999999999999,
+        "min_silk_clearance": 0.15,
+        "min_text_height": 1.0,
+        "min_text_thickness": 0.153,
+        "min_through_hole_diameter": 0.22,
+        "min_track_width": 0.127,
+        "min_via_annular_width": 0.13,
         "min_via_diameter": 0.5,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
@@ -163,8 +174,26 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
-      "via_dimensions": [],
+      "track_widths": [
+        0.0,
+        0.2032,
+        1.0,
+        1.2
+      ],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        },
+        {
+          "diameter": 0.8128,
+          "drill": 0.4064
+        },
+        {
+          "diameter": 1.2,
+          "drill": 0.6
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "layer_presets": [],
@@ -397,7 +426,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.158,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -417,99 +446,7 @@
       "version": 3
     },
     "net_colors": null,
-    "netclass_assignments": {
-      "/CAN_module/CAN_H": "OBD_CAN_H",
-      "/CAN_module/CAN_L": "OBD_CAN_L",
-      "/CAN_module/MOD_CS": "OBDR_CE",
-      "/CAN_module/MOD_INT": "SHIFT_B2",
-      "/CAN_module/MOD_SCK": "OBDR_SCLK",
-      "/CAN_module/MOD_SI": "OBDR_MOSI",
-      "/GPIO10": "BUT4",
-      "/GPIO11": "BUT5",
-      "/GPIO12": "BUT1",
-      "/GPIO14": "TXD1",
-      "/GPIO15": "RXD1",
-      "/GPIO16": "CTS1",
-      "/GPIO17": "RTS1",
-      "/GPIO18": "ACT_PWM",
-      "/GPIO19": "Buzzer",
-      "/GPIO20": "LED_WRN",
-      "/GPIO21": "LED_ALM",
-      "/GPIO23": "INP_BRAKE",
-      "/GPIO24": "INP_CLUTCH",
-      "/GPIO3": "SHIFT_A2Y",
-      "/GPIO4": "OBDR_CE",
-      "/GPIO5": "OBDR_MISO",
-      "/GPIO6": "OBDR_MOSI",
-      "/GPIO7": "OBDR_SCLK",
-      "/GPIO8": "BUT2",
-      "/GPIO9": "BUT3",
-      "/disp_backlight/LEDB_ANODE": "DISP_BL_AN",
-      "/disp_backlight/LEDB_CATHODE": "DISP_BL_CATH",
-      "Net-(J10-Pin_2)": "BUT4",
-      "Net-(J11-Pin_2)": "BUT5",
-      "Net-(J12-Pin_15)": "SUPPLY_3V3",
-      "Net-(J15-Pin_2)": "SUPPLY_3V3",
-      "Net-(J15-Pin_31)": "DISP_BL_CATH",
-      "Net-(J15-Pin_39)": "DISP_BL_AN",
-      "Net-(J7-Pin_2)": "BUT1",
-      "Net-(J8-Pin_2)": "BUT2",
-      "Net-(J9-Pin_2)": "BUT3",
-      "Net-(R3-Pad1)": "INP_CLUTCH",
-      "Net-(R4-Pad1)": "INP_BRAKE",
-      "unconnected-(BZ1---Pad1)": "Buzzer",
-      "unconnected-(J12-Pin_11-Pad11)": "CAM_GPIO",
-      "unconnected-(J12-Pin_13-Pad13)": "CAM_SCL",
-      "unconnected-(J12-Pin_14-Pad14)": "CAM_SDA",
-      "unconnected-(J12-Pin_2-Pad2)": "CAM_D0_N",
-      "unconnected-(J12-Pin_3-Pad3)": "CAM_D0_N",
-      "unconnected-(J12-Pin_5-Pad5)": "CAM_D1_N",
-      "unconnected-(J12-Pin_6-Pad6)": "CAM_D1_P",
-      "unconnected-(J12-Pin_8-Pad8)": "CAM_C_N",
-      "unconnected-(J12-Pin_9-Pad9)": "CAM_C_N",
-      "unconnected-(J13-Pin_17-Pad17)": "CAM_GPIO",
-      "unconnected-(J13-Pin_2-Pad2)": "CAM_D0_N",
-      "unconnected-(J13-Pin_20-Pad20)": "CAM_SCL",
-      "unconnected-(J13-Pin_21-Pad21)": "CAM_SDA",
-      "unconnected-(J13-Pin_22-Pad22)": "SUPPLY_3V3",
-      "unconnected-(J13-Pin_3-Pad3)": "CAM_D0_P",
-      "unconnected-(J13-Pin_5-Pad5)": "CAM_D1_N",
-      "unconnected-(J13-Pin_6-Pad6)": "CAM_D1_P",
-      "unconnected-(J13-Pin_8-Pad8)": "CAM_C_N",
-      "unconnected-(J13-Pin_9-Pad9)": "CAM_C_P",
-      "unconnected-(J14-Pin_11-Pad11)": "D2N",
-      "unconnected-(J14-Pin_12-Pad12)": "D2P",
-      "unconnected-(J14-Pin_14-Pad14)": "D3N",
-      "unconnected-(J14-Pin_15-Pad15)": "D3P",
-      "unconnected-(J14-Pin_2-Pad2)": "D0N",
-      "unconnected-(J14-Pin_22-Pad22)": "SUPPLY_3V3",
-      "unconnected-(J14-Pin_3-Pad3)": "D0P",
-      "unconnected-(J14-Pin_5-Pad5)": "D1N",
-      "unconnected-(J14-Pin_6-Pad6)": "D1P",
-      "unconnected-(J14-Pin_8-Pad8)": "DCLKN",
-      "unconnected-(J14-Pin_9-Pad9)": "DCLKP",
-      "unconnected-(J15-Pin_11-Pad11)": "D1N",
-      "unconnected-(J15-Pin_12-Pad12)": "D1P",
-      "unconnected-(J15-Pin_14-Pad14)": "D2N",
-      "unconnected-(J15-Pin_15-Pad15)": "D2P",
-      "unconnected-(J15-Pin_17-Pad17)": "DCLKN",
-      "unconnected-(J15-Pin_18-Pad18)": "DCLKP",
-      "unconnected-(J15-Pin_20-Pad20)": "D3N",
-      "unconnected-(J15-Pin_21-Pad21)": "D3P",
-      "unconnected-(J15-Pin_8-Pad8)": "D0N",
-      "unconnected-(J15-Pin_9-Pad9)": "D0P",
-      "unconnected-(J5-Pin_1-Pad1)": "ACT_PWM",
-      "unconnected-(JP2-A-Pad1)": "SUPPLY_3V3",
-      "unconnected-(R1-Pad1)": "LED_WRN",
-      "unconnected-(R2-Pad1)": "LED_ALM",
-      "unconnected-(U1-A2Y-Pad)": "SHIFT_A2Y",
-      "unconnected-(U1-B1Y-Pad)": "OBDR_MISO",
-      "unconnected-(U1-B2-Pad)": "SHIFT_B2",
-      "unconnected-(U5-R1OUT-Pad12)": "RXD1",
-      "unconnected-(U5-R2OUT-Pad9)": "CTS1",
-      "unconnected-(U5-T1IN-Pad11)": "TXD1",
-      "unconnected-(U5-T2IN-Pad10)": "RTS1"
-    },
+    "netclass_assignments": null,
     "netclass_patterns": []
   },
   "pcbnew": {
@@ -547,6 +484,14 @@
       "version": 1
     },
     "net_format_name": "",
+    "ngspice": {
+      "fix_include_paths": true,
+      "meta": {
+        "version": 0
+      },
+      "model_mode": 0,
+      "workbook_filename": ""
+    },
     "page_layout_descr_file": "",
     "plot_directory": "",
     "spice_current_sheet_as_root": false,
@@ -563,10 +508,6 @@
       ""
     ],
     [
-      "8b4d884c-cd1b-4aef-a22a-f556d6b6e84d",
-      "CAN_module"
-    ],
-    [
       "77b9bb36-6392-4d5c-9e11-e496eecbd8fb",
       "disp_backlight"
     ],
@@ -577,6 +518,10 @@
     [
       "6ca68269-df28-4fc9-b737-b9cc21f50109",
       "camera_15_to_22"
+    ],
+    [
+      "c215048b-154f-4e8b-b829-42e6eb9d18cd",
+      "control_buttons"
     ],
     [
       "8c303a98-b3e3-40de-8c75-59226f665871",

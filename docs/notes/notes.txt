@@ -49,3 +49,8 @@ Level Shifter:
 	- https://www.mouser.de/ProductDetail/Texas-Instruments/TXU0202QDCURQ1?qs=T%252BzbugeAwjilAEnL3sZS6Q%3D%3D
 
 
+New inductor:
+	- https://store.comet.bg/Catalogue/Product/9508/
+	- https://store.comet.bg/Catalogue/Product/16317/
+
+3D Models site: www.we-online.com

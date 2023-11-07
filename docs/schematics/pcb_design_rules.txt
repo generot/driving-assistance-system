@@ -1,0 +1,3 @@
+PTH hole size: >= 1.1 mm (+0.1 for tolerance)
+Pad size: 2 * 0.25 + PTH_hole_size + tolerance = 1.7 mm
+
