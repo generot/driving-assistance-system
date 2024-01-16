@@ -154,6 +154,8 @@ struct mipi_dsi_host *of_find_mipi_dsi_host_by_node(struct device_node *node);
 /* transmit data ending at the same time for all lanes within one hsync */
 #define MIPI_DSI_HS_PKT_END_ALIGNED	BIT(12)
 
+#define MIPI_DSI_FMT_RGB888 0
+
 enum mipi_dsi_pixel_format {
 	MIPI_DSI_FMT_RGB888,
 	MIPI_DSI_FMT_RGB666,

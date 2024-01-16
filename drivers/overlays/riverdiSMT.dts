@@ -1,22 +1,30 @@
 /dts-v1/;
 /plugin/;
 
-#include "../include/drm_mipi_dsi.h";
+#include "../include/mipi_dsi.h"
 
 / {
-	compatible = "brcm,bcm2835";
+	//Changed from BCM2835
+	compatible = "brcm,bcm2711";
 
 	fragment@0 {
-		target = <&dsi0>;
+		target = <&dsi1>;
+
 		__overlay__  {
 			status = "okay";
 
-			#adress-cells = <1>;
+			#address-cells = <1>;
 			#size-cells = <0>;
 
-			mipi_panel: mipi-panel {
- 
-				compatible = "simple-panel";
+			port {
+				dsi1_out_port: endpoint {
+					remote-endpoint = <&panel_dsi_in1>;
+				};
+			};
+
+			//mipi_panel: mipi_panel
+			mipi_panel: panel@0 {
+				compatible = "simple-panel-dsi";
 				reg = <0>;
 			
 				//enable-gpios = <&gpio6 3 GPIO_ACTIVE_LOW>;
@@ -48,9 +56,16 @@
 					15 00 02 86 B0
 					05 00 01 21
 				];
+
+				port {
+					panel_dsi_in1: endpoint {
+						remote-endpoint = <&dsi1_out_port>;
+					};
+				};
 	
 				display-timings {
 					native-mode = <&timing2>;
+					//timing2: timing2
 					timing2: timing2 {
 						clock-frequency = <33000000>; //dclk
 						hactive = <1024>; //hactive

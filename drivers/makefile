@@ -1,4 +1,5 @@
 DTC=dtc
+PP=cpp
 
 SRCDIR=./overlays
 OUTDIR=./dtbos
@@ -11,4 +12,4 @@ all: $(TARGET)
 	touch $(TARGET)
 
 $(OUTDIR)/%.dtbo: $(SRCDIR)/%.dts
-	$(DTC) -@ -I dts -O dtb -o $@ $<
+	$(PP) -nostdinc -undef -x assembler-with-cpp $< | $(DTC) -@ -I dts -O dtb -o $@
