@@ -1,0 +1,36 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	//Changed from BCM2835
+	compatible = "brcm,bcm2711";
+
+	fragment@0 {
+		target = <&dsi1>;
+
+		__overlay__  {
+			status = "okay";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port {
+				dsi1_out_port: endpoint {
+					remote-endpoint = <&panel_dsi_in1>;
+				};
+			};
+
+			//mipi_panel: mipi_panel
+			rvt70_panel: rvt70@0 {
+				compatible = "riverdi,rvt70";
+				port {
+					panel_dsi_in1: endpoint {
+						remote-endpoint = <&dsi1_out_port>;
+					};
+				};
+	
+			};
+		
+		};
+	};
+};
