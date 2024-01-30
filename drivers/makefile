@@ -12,4 +12,4 @@ all: $(TARGET)
 	touch $(TARGET)
 
 $(OUTDIR)/%.dtbo: $(SRCDIR)/%.dts
-	$(PP) -nostdinc -undef -x assembler-with-cpp $< | $(DTC) -@ -I dts -O dtb -o $@
+	$(PP) -P -nostdinc -undef -x assembler-with-cpp $< | $(DTC) -@ -I dts -O dtb -o $@

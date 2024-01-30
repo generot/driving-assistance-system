@@ -5,7 +5,7 @@
 
 / {
 	//Changed from BCM2835
-	compatible = "brcm,bcm2711";
+	compatible = "brcm,bcm2835";
 
 	fragment@0 {
 		target = <&dsi1>;
@@ -23,10 +23,12 @@
 			};
 
 			//mipi_panel: mipi_panel
-			mipi_panel: panel@0 {
+			mipi_panel: mipi_panel@0 {
 				compatible = "simple-panel-dsi";
 				reg = <0>;
 			
+				vc4_dsi = <&dsi1>;
+				power-domains = <&power 18>;
 				//enable-gpios = <&gpio6 3 GPIO_ACTIVE_LOW>;
 				//reset-gpios = <&gpio6 4 GPIO_ACTIVE_HIGH>;
 			
@@ -42,7 +44,7 @@
 			
 				dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_MODE_LPM)>;
 				dsi,format = <MIPI_DSI_FMT_RGB888>;
-				dsi,lanes = <2>;
+				dsi,lanes = <1>;
 			
 				panel-init-sequence = [
 					15 00 02 87 5a

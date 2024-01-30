@@ -3,7 +3,7 @@
 
 / {
 	//Changed from BCM2835
-	compatible = "brcm,bcm2711";
+	compatible = "brcm,bcm2835";
 
 	fragment@0 {
 		target = <&dsi1>;
@@ -20,9 +20,13 @@
 				};
 			};
 
-			//mipi_panel: mipi_panel
 			rvt70_panel: rvt70@0 {
 				compatible = "riverdi,rvt70";
+				reg = <0>;
+
+				vc4_dsi = <&dsi1>;
+				power-domains = <&power 18>;
+
 				port {
 					panel_dsi_in1: endpoint {
 						remote-endpoint = <&dsi1_out_port>;
