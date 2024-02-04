@@ -70,3 +70,16 @@ def project_to_3d(camera_mats, detection_left_pt, detection_right_pt):
     points_3d, _ = linear_LS_triangulation(proj_points_left, camera_mat_1, proj_points_right, camera_mat_2)
 
     return points_3d
+
+def get_world_dist(camera_mats, point_cm_3d):
+    T = camera_mats["tvecs"]
+    baseline_world = 20 #cm
+
+    correction = 2 #compensating for calibration errors
+
+    baseline_cmspace = abs(T[0,0]) + correction
+    point_z_cmspace = point_cm_3d[0,2]
+
+    point_z_world = baseline_world * point_z_cmspace // baseline_cmspace
+
+    return point_z_world

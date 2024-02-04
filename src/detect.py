@@ -5,7 +5,7 @@ import numpy as np
 
 from rpicam import camera_init, get_frame
 from traff_sign import recognize_sl_sign, recognize_sign_digits, train_knn
-from stereo import project_to_3d, match_roi
+from stereo import project_to_3d, match_roi, get_world_dist
 
 FPS = 90
 
@@ -25,7 +25,8 @@ def classify_car_rear(frame, crop_y = None, crop_x = None):
     closing = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, closing_kernel)
 
     #detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
-    detected = classifier.detectMultiScale(closing, 1.0006, 7, 0, (150,150))
+    #detected = classifier.detectMultiScale(closing, 1.0006, 7, 0, (150,150))
+    detected = classifier.detectMultiScale(closing, 1.08, 3, minSize=(50,50))
    
     return (augmented, detected)
 
@@ -82,6 +83,7 @@ def main():
     cam1 = camera_init(1)
 
     last_detected_sl = 0
+    last_distance = 0
 
     get_average_box = average_box_init()
     #knn = train_knn()
@@ -100,16 +102,20 @@ def main():
         car_frame, result = classify_car_rear(frame)
 
         avg = get_average_box(result)
-    
+        
         if avg[2] != 0 and avg[3] != 0:
             other_upper_left, _, _ = match_roi(frame1, car_frame, avg)
-            points_4d = project_to_3d(stereo_matrices, (avg[0], avg[1]), other_upper_left)
+            points_3d = project_to_3d(stereo_matrices, (avg[0], avg[1]), other_upper_left)
 
-            print(points_4d)
+            dist = get_world_dist(stereo_matrices, points_3d)
+
+            last_distance = dist
 
         #last_detected_sl = speed_limit_rec(frame)
 
         #cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2.putText(frame, f"Distance from front vehicle: {last_distance} cm", 
+                    (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
         cv2.imshow("Camera 1", frame)
