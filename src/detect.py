@@ -3,10 +3,13 @@
 import cv2
 import numpy as np
 
-from traff_sign import recognize_sl_sign, recognize_sign_digits, train_knn
 from rpicam import camera_init, get_frame
+from traff_sign import recognize_sl_sign, recognize_sign_digits, train_knn
+from stereo import project_to_3d, match_roi
 
 FPS = 90
+
+stereo_matrices = np.load("../data/stereo_calib_mats.npz")
 
 classifier = cv2.CascadeClassifier("../models/cars.xml")
 closing_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
@@ -17,12 +20,12 @@ def classify_car_rear(frame, crop_y = None, crop_x = None):
     #augmented2 = cv2.convertScaleAbs(augmented, alpha=1.7, beta=40)
 
     gray = cv2.cvtColor(augmented, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 5)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 5)
     dilated = cv2.dilate(blurred, (5, 5), iterations=3)
     closing = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, closing_kernel)
 
     #detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
-    detected = classifier.detectMultiScale(closing, 1.0006, 3, 0, (150,150))
+    detected = classifier.detectMultiScale(closing, 1.0006, 7, 0, (150,150))
    
     return (augmented, detected)
 
@@ -38,20 +41,12 @@ def average_box_init():
 
         if len(results) == 0:
             no_matches_cnt += 1
+        else:
+            avg_bbox = np.mean(results, axis=0, dtype=np.int32)
 
         if no_matches_cnt > no_matches_threshold:
             avg_bbox = np.zeros(4, dtype=np.int32)
             no_matches_cnt = 0
-
-        for rect in results:
-            x, y, width, height = rect
-
-            rect_arrlike = np.array([x, y, width, height])
-    
-            if np.array_equal(avg_bbox, np.zeros(4)):
-                avg_bbox = np.array(rect_arrlike)
-            else:
-                avg_bbox = (avg_bbox + rect_arrlike) // 2
 
         return avg_bbox
 
@@ -84,16 +79,16 @@ def speed_limit_rec(frame):
 
 def main():
     cam0 = camera_init(0)
+    cam1 = camera_init(1)
 
     last_detected_sl = 0
 
     get_average_box = average_box_init()
     #knn = train_knn()
 
-    print(cv2.getBuildInformation())
-
     while True:
         frame = get_frame(cam0)
+        frame1 = get_frame(cam1)
 
         #aspect_ratio = frame.shape[1] / frame.shape[0]
         #res_mult = 720
@@ -101,15 +96,24 @@ def main():
         frame = cv2.convertScaleAbs(frame, alpha=0.8, beta=10)
         #frame = cv2.resize(frame, (int(aspect_ratio * res_mult), res_mult))
 
-        car_frame, result = classify_car_rear(frame, (0, 480), (100, 380))
+        #car_frame, result = classify_car_rear(frame, (0, 480), (100, 380))
+        car_frame, result = classify_car_rear(frame)
+
         avg = get_average_box(result)
+    
+        if avg[2] != 0 and avg[3] != 0:
+            other_upper_left, _, _ = match_roi(frame1, car_frame, avg)
+            points_4d = project_to_3d(stereo_matrices, (avg[0], avg[1]), other_upper_left)
+
+            print(points_4d)
 
         #last_detected_sl = speed_limit_rec(frame)
 
         #cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
-        cv2.imshow("Sample Video", frame)
+        cv2.imshow("Camera 1", frame)
+        cv2.imshow("Camera 2", frame1)
         #cv2.imshow("Only Red", car_frame)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):

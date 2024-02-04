@@ -40,9 +40,10 @@ def main():
     while cv2.waitKey(1) != ord('e'):
         #fr1, fr2 = get_frames_stereo(cam1, cam2)
         fr1 = get_frame(cam1)
+        fr2 = get_frame(cam2)
 
         cv2.imshow('frame1', fr1)
-        #cv2.imshow('frame2', fr2)
+        cv2.imshow('frame2', fr2)
 
 
 if __name__ == "__main__":

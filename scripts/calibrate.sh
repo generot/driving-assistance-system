@@ -18,7 +18,7 @@ setup_vars() {
 }
 
 take_samples() {
-	for i in $(seq 1 $NUM_SAMPLES)
+	for i in $(seq $1 $NUM_SAMPLES)
 	do
 		read -p "Take snap #$i? [y/n]: " USER_RESP
 
@@ -31,4 +31,4 @@ take_samples() {
 }
 
 setup_vars
-take_samples
+take_samples $1

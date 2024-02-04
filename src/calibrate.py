@@ -39,7 +39,6 @@ def calibrate_cam(calib_paths):
             img_points_2.append(corners2)
             obj_points.append(object_points)
 
-
         cv2.drawChessboardCorners(img0, CHECKERBOARD_D, corners1, ret1)
         cv2.drawChessboardCorners(img1, CHECKERBOARD_D, corners2, ret2)
 
@@ -48,21 +47,27 @@ def calibrate_cam(calib_paths):
 
         cv2.waitKey(0)
 
-    return cv2.stereoCalibrate(obj_points,img_points_1, img_points_2, 
-                               None, None, None, None,(rpicam.CAM_WIDTH, rpicam.CAM_HEIGHT))
+    #ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points_2, (rpicam.CAM_WIDTH, rpicam.CAM_HEIGHT), None, None)
+    #print(ret)
 
-def main():
+    return cv2.stereoCalibrate(obj_points,img_points_1, img_points_2, 
+                               None, None, None, None,(rpicam.CAM_WIDTH, rpicam.CAM_HEIGHT), flags=0)
+
+def calibrate_stereo():
     paths_cam0 = sorted(glob.glob("../samples/calibration/cm4/cam0/*.jpg"))
     paths_cam1 = sorted(glob.glob("../samples/calibration/cm4/cam1/*.jpg"))
 
     path_pairs = list(zip(paths_cam0, paths_cam1))
 
-    #print(path_pairs)
+    print(path_pairs)
 
     ret, Q1, dC1, Q2, dC2, rvecs, tvecs, e_mat, f_mat = calibrate_cam(path_pairs)
+    r1, r2, p1, p2, _, _, _ = cv2.stereoRectify(Q1, dC1, Q2, dC2, (rpicam.CAM_WIDTH, rpicam.CAM_HEIGHT), rvecs, tvecs)
+
+    np.savez("../data/stereo_calib_mats.npz", p1=p1, dc1=dC1, p2=p2, dc2=dC2, r1=r1, r2=r2, e=e_mat, f=f_mat)
 
     print(ret)
 
 if __name__ == "__main__":
-    main()
+    calibrate_stereo()
     cv2.destroyAllWindows()
