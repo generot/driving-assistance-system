@@ -24,15 +24,6 @@ def get_frame(cam):
 
     return fr
 
-def get_frames_stereo(cam1, cam2):
-    fr1 = cam1.capture_array()
-    fr2 = cam2.capture_array()
-
-    #fr1 = cv2.cvtColor(fr1, cv2.COLOR_YUV420p2RGB)
-    #fr2 = cv2.cvtColor(fr2, cv2.COLOR_YUV420p2RGB)
-
-    return (fr1, fr2)
-
 def main():
     cam1 = camera_init(0)
     cam2 = camera_init(1)
