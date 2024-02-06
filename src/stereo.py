@@ -76,10 +76,11 @@ def get_world_dist(camera_mats, point_cm_3d):
     baseline_world = 20 #cm
 
     correction = 2 #compensating for calibration errors
+    error = 20 #After testing, it was determined that the calculated distance is off by about 20 cm
 
     baseline_cmspace = abs(T[0,0]) + correction
     point_z_cmspace = point_cm_3d[0,2]
 
-    point_z_world = baseline_world * point_z_cmspace // baseline_cmspace
+    point_z_world = baseline_world * point_z_cmspace // baseline_cmspace - error
 
     return point_z_world

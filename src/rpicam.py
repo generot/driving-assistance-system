@@ -4,8 +4,8 @@ import cv2
 
 from picamera2 import Picamera2
 
-CAM_WIDTH = 640
-CAM_HEIGHT = 480
+CAM_WIDTH = 1640
+CAM_HEIGHT = 1232
 
 def camera_init(cam_id):
     cam = Picamera2(cam_id)

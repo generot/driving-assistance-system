@@ -1,3 +1,5 @@
+from subprocess import check_call
+
 from gpiozero import Button, LED, Buzzer
 from signal import pause
 
@@ -20,3 +22,8 @@ periphery_table = {
     "led_alert": LED(LED_ALERT_GPIO),
     "buzzer": Buzzer(BUZZER_GPIO)
 }
+
+def shutdown_device():
+    check_call([ "shutdown", "now" ])
+
+periphery_table["but_4"].when_pressed = shutdown_device

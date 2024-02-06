@@ -84,24 +84,34 @@ def main(v_speed):
         frame = get_frame(cam0)
         frame1 = get_frame(cam1)
 
+        aspect_ratio = frame.shape[1] / frame.shape[0]
+        height = 480
+
         frame = cv2.convertScaleAbs(frame, alpha=0.8, beta=10)
+        frame1 = cv2.convertScaleAbs(frame1, alpha=0.8, beta=10)
+
+        frame = cv2.resize(frame, (int(aspect_ratio * height), height))
+        frame1 = cv2.resize(frame1, (int(aspect_ratio * height), height))
 
         #car_frame, result = classify_car_rear(frame, (0, 480), (100, 380))
         car_frame, result = classify_car_rear(frame)
 
-        avg = get_average_box(result)
-        
-        if avg[2] != 0 and avg[3] != 0:
-            other_upper_left, _, _ = match_roi(frame1, car_frame, avg)
-            points_3d = project_to_3d(stereo_matrices, (avg[0], avg[1]), other_upper_left)
+        if np.any(result) != None:
+            avg = get_average_box(result)
 
-            dist = get_world_dist(stereo_matrices, points_3d)
+            if avg[2] != 0 and avg[3] != 0:
+                other_upper_left, _, _ = match_roi(frame1, car_frame, avg)
+                points_3d = project_to_3d(stereo_matrices, (avg[0], avg[1]), other_upper_left)
 
-            last_distance = dist
+                dist = get_world_dist(stereo_matrices, points_3d)
+
+                last_distance = dist
+
+            cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
         #last_detected_sl = speed_limit_rec(frame)
 
-        check_distance(last_distance, v_speed.value)
+        #check_distance(last_distance, v_speed.value)
         #check_distance(1000, 50)
         
         '''
@@ -114,10 +124,9 @@ def main(v_speed):
         cv2.putText(frame, f"Speed to keep: {speed_to_keep} km/h", 
                     (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 1)
  
-        cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
         cv2.imshow("Camera 1", frame)
-        cv2.imshow("Camera 2", frame1)
+        #cv2.imshow("Camera 2", frame1)
         #cv2.imshow("Only Red", car_frame)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):

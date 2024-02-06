@@ -18,7 +18,8 @@ def classify_car_rear(frame, crop_y = None, crop_x = None):
 
     #detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
     #detected = classifier.detectMultiScale(closing, 1.0006, 7, 0, (150,150))
-    detected = classifier.detectMultiScale(closing, 1.08, 3, minSize=(50,50))
+    detected = classifier.detectMultiScale(closing, 1.2, 3, minSize=(50, 50), maxSize=(150, 150))
+    #detected = None
    
     return (augmented, detected)
 
@@ -35,7 +36,7 @@ def average_box_init():
         if len(results) == 0:
             no_matches_cnt += 1
         else:
-            avg_bbox = np.mean(results, axis=0, dtype=np.int32)
+            avg_bbox = (avg_bbox + results[0]) // 2
 
         if no_matches_cnt > no_matches_threshold:
             avg_bbox = np.zeros(4, dtype=np.int32)
