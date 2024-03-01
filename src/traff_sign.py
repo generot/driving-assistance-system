@@ -5,7 +5,7 @@ import numpy as np
 import re
 
 from glob import glob
-from imutils import contours
+#from imutils import contours
 
 #RED (lower boundary)
 lower1 = np.array([0, 100, 20])

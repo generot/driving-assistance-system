@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!../venv/bin/python
 
 import cv2
 import numpy as np
@@ -13,15 +13,15 @@ closing_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
 def classify_car_rear(frame, crop_y, crop_x):
     augmented = frame[crop_y[0]:crop_y[1], crop_x[0]:crop_x[1]]
 
-    augmented = cv2.convertScaleAbs(augmented, alpha=1.7, beta=40)
+    augmented2 = cv2.convertScaleAbs(augmented, alpha=1.7, beta=40)
 
-    gray = cv2.cvtColor(augmented, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(augmented2, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 5)
     dilated = cv2.dilate(blurred, (5, 5), iterations=3)
     closing = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, closing_kernel)
 
-    detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
-    #detected = classifier.detectMultiScale(closing, 1.0006, 3, 0, (150,150))
+    #detected = classifier.detectMultiScale(closing, 1.08, 7, 0, minSize=(50, 50))
+    detected = classifier.detectMultiScale(closing, 1.0006, 3, 0, (150,150))
    
     return (augmented, detected)
 
@@ -57,12 +57,12 @@ def average_box_init():
     return get_average_box
 
 def main():
-    video = cv2.VideoCapture("../samples/classified/night.mp4")
+    video = cv2.VideoCapture("../samples/sample_florida1.mp4")
 
     last_detected_sl = 0
 
     get_average_box = average_box_init()
-    knn = train_knn()
+    #knn = train_knn()
 
     video.set(cv2.CAP_PROP_POS_MSEC, 30 * 1000)
 
@@ -75,17 +75,13 @@ def main():
         aspect_ratio = frame.shape[1] / frame.shape[0]
         res_mult = 720
 
-        frame = cv2.convertScaleAbs(frame, alpha=0.7, beta=40)
+        frame = cv2.convertScaleAbs(frame, alpha=0.8, beta=10)
         frame = cv2.resize(frame, (int(aspect_ratio * res_mult), res_mult))
 
-        car_frame, result = classify_car_rear(frame, (200, 600), (700, 1000))
+        #car_frame, result = classify_car_rear(frame, (200, 600), (200, 800))
         sl_frame, dilated, circles = recognize_sl_sign(frame, (200, 600))
 
-        avg = get_average_box(result)
-
-        avg = avg + np.array([700, 200, 0, 0], dtype=np.int32)
-
-        print(avg)
+        #avg = get_average_box(result)
 
         if np.any(circles) != None:
             for i, circle in enumerate(circles):
@@ -100,16 +96,16 @@ def main():
                         gray = cv2.cvtColor(square_frame, cv2.COLOR_BGR2GRAY)
                         resized = cv2.resize(gray, (50, 50))
                         
-                        last_detected_sl = recognize_sign_digits(knn, resized)
-                        print(last_detected_sl)
+                        #last_detected_sl = recognize_sign_digits(knn, resized)
+                        #print(last_detected_sl)
 
                     cv2.circle(sl_frame, (round_x, round_y), round_r, (0, 0, 255), 2)
 
-        cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        cv2.rectangle(frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
+        #cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        #cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
         cv2.imshow("Sample Video", frame)
-        cv2.imshow("Only Red", car_frame)
+        #cv2.imshow("Only Red", car_frame)
 
         if cv2.waitKey(1000 // FPS) == ord('e'):
             break

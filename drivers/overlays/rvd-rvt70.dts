@@ -1,0 +1,40 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	//Changed from BCM2835
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&dsi1>;
+
+		__overlay__  {
+			status = "okay";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port {
+				dsi1_out_port: endpoint {
+					remote-endpoint = <&panel_dsi_in1>;
+				};
+			};
+
+			rvt70_panel: rvt70@0 {
+				compatible = "riverdi,rvt70";
+				reg = <0>;
+
+				vc4_dsi = <&dsi1>;
+				power-domains = <&power 18>;
+
+				port {
+					panel_dsi_in1: endpoint {
+						remote-endpoint = <&dsi1_out_port>;
+					};
+				};
+	
+			};
+		
+		};
+	};
+};
