@@ -3,61 +3,92 @@
 import cv2
 import numpy as np
 import os
+import math
 
 from glob import glob
+
+NO_DETECT = -1
 
 #KNN Training data
 KNN_IMAGE_SZ = (20, 20)
 KNN_DATASET_PATH = "../models/signs/digits/"
 
-#RED (lower boundary)
-lower1 = np.array([0, 100, 20])
-upper1 = np.array([10, 255, 255])
- 
-#RED (upper boundary)
-lower2 = np.array([160,100,20])
-upper2 = np.array([179,255,255])
-
 sign_gauss_blur_kernel = (7,7)
-sign_gauss_blur_delta = 5
+#sign_gauss_blur_delta = 5
+sign_gauss_blur_delta = 1.5
 sign_dilation_kernel = (11, 11)
 sign_hcircles_p1 = 220
 sign_hcircles_p2 = 60
-sign_hcircles_max_r = 40
-sign_hcircles_min_r = 10
+sign_hcircles_max_r = 80
+sign_hcircles_min_r = 30
 
-def recognize_sl_sign(frame: cv2.Mat, crop_y: tuple[int, int] = None) -> tuple[cv2.Mat, cv2.Mat, cv2.Mat]:
+binary_thresh = 160
+area_thresh = 3000
+
+def check_circularity(cnt):
+    area = cv2.contourArea(cnt)
+    perimeter = cv2.arcLength(cnt, True)
+    
+    if perimeter == 0:
+        return False, area
+
+    circularity = 4*math.pi*(area/(perimeter*perimeter))
+
+    if 0.7 < circularity < 1:
+        return True, area, cnt
+    
+    return False, area
+
+def recognize_sl_sign(frame: cv2.Mat, crop_y: tuple[int, int] = None):
     augmented = frame[crop_y[0] : crop_y[1]] if crop_y != None else frame
+    
+    blurred = cv2.medianBlur(augmented, 3)
 
-    hsv_img = cv2.cvtColor(augmented, cv2.COLOR_BGR2HSV)
+    yuv = cv2.cvtColor(blurred, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(yuv)
+    
+    v1 = cv2.normalize(v, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    _, threshold = cv2.threshold(v1, binary_thresh, 255, cv2.THRESH_BINARY)
 
-    lower = cv2.inRange(hsv_img, lower1, upper1)
-    upper = cv2.inRange(hsv_img, lower2, upper2)
+    threshold = cv2.dilate(threshold, sign_dilation_kernel, iterations=5)
 
-    filtered = lower + upper
+    contours, hierarchy = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    areas = []
 
-    blurred = cv2.GaussianBlur(filtered, sign_gauss_blur_kernel, sign_gauss_blur_delta)
-    dilated = cv2.dilate(blurred, sign_dilation_kernel)
+    for con in contours:
+        res = check_circularity(con)
 
-    circles = cv2.HoughCircles(dilated, 
-                               cv2.HOUGH_GRADIENT, 
-                               2, 
-                               len(augmented) // 4, 
-                               param1=sign_hcircles_p1, 
-                               param2=sign_hcircles_p2, 
-                               maxRadius=sign_hcircles_max_r, 
-                               minRadius=sign_hcircles_min_r)
+        if res[0] == True:
+            areas.append(res)
 
-    return augmented, dilated, circles
+    if areas == []:
+        return augmented, threshold, None
 
-def recognize_sign_digits(knn: cv2.ml.KNearest, gray: cv2.Mat) -> str:
-    blur = cv2.GaussianBlur(gray, (5, 5), 1)
-    threshold = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 13, 4)
+    _, _, biggest_cnt = max(areas, key=lambda val: val[1])
+    
+    return augmented, threshold, biggest_cnt
+
+def recognize_sign_digits(knn: cv2.ml.KNearest, gray: cv2.Mat, frame) -> str:
+    imgFloat = frame.astype(np.float32) / 255.
+    kChannel = 1 - np.max(imgFloat, axis=2)
+    kChannel = (255 * kChannel).astype(np.uint8)
+
+    #threshold = cv2.adaptiveThreshold(kChannel, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 13, 8)
+    _, threshold = cv2.threshold(kChannel, 150, 255, cv2.THRESH_BINARY)
+    dilation = cv2.dilate(threshold, (7, 7))
+
+    h, w = dilation.shape
+    h5 = h // 6
+    w5 = w // 6
+
+    threshold = threshold[h5 : h - h5, w5 : w - w5]
 
     cnts, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    filtered_contours = [cv2.boundingRect(x) for x in cnts if cv2.contourArea(x) > 90.0]
+    filtered_contours = [cv2.boundingRect(x) for x in cnts if cv2.contourArea(x) > 200]
     sorted_contours = sorted(filtered_contours, key=lambda i: i[0])
+
+    cv2.imshow("Contours", threshold)
 
     digits = []
 
@@ -66,16 +97,34 @@ def recognize_sign_digits(knn: cv2.ml.KNearest, gray: cv2.Mat) -> str:
 
         digit_frame = threshold[y : y + h, x : x + w]
 
+        x += w5
+        y += h5
+
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 1)
+
         resized = cv2.resize(digit_frame, KNN_IMAGE_SZ)
         reshaped = resized.reshape(-1, KNN_IMAGE_SZ[0] * KNN_IMAGE_SZ[1]).astype(np.float32)
     
-        _, result, _, _ = knn.findNearest(reshaped, 12)
+        _, result, _, _ = knn.findNearest(reshaped, k=12)
+        print(result)
         int_result = np.unique(result).astype(np.int32)
 
         digits.append(str(int_result[0]))
-        #print(int_result)
 
     return "".join(digits)
+
+def deduce_value(recognized_value: str) -> str:
+    if not len(recognized_value):
+        return NO_DETECT
+
+    if recognized_value[0] == "0" or (val := int(recognized_value)) > 200:
+        return NO_DETECT
+    
+    if val % 5 != 0:
+        return NO_DETECT
+
+    return val
+            
 
 def read_train_data(dataset_path: str) -> tuple[list[int], list[cv2.Mat]]:
     def read_and_resize(path):
@@ -109,9 +158,43 @@ def train_knn(dataset_path: str) -> cv2.ml.KNearest:
 
     return knn
 
+class TSR:
+    def __init__(self, knn: cv2.ml.KNearest):
+        self.knn = knn
+        self.limit = 0
+        self.prev_limit = 0
+    
+    def detect_sl_on_frame(self, frame):
+        aug, threshold, circle = recognize_sl_sign(frame)
+                
+        if np.any(circle) and cv2.contourArea(circle) > area_thresh:
+            x, y, w, h = cv2.boundingRect(circle)
 
-def test_video():
-    video = cv2.VideoCapture("../samples/private/sample_carigradsko_1.mp4")
+            tl = (x, y)
+            br = (x + w, y + h)
+
+            sign_frame = frame[y : y + h, x : x + w]
+            
+            #cv2.rectangle(aug, tl, br, (0, 255, 0), 1)
+
+            self.prev_limit = self.limit
+            self.limit = recognize_sign_digits(self.knn, cv2.cvtColor(sign_frame, cv2.COLOR_BGR2GRAY), sign_frame)
+
+            return tl, br
+        
+        return None, None
+        
+    def has_sl_changed(self):
+        return self.limit != self.prev_limit
+    
+    def get_limit(self):
+        return deduce_value(self.limit)
+
+    
+
+def test_video_2():
+    #video = cv2.VideoCapture("../samples/private/sample_carigradsko_1.mp4")
+    video = cv2.VideoCapture(0)
     knn = train_knn(KNN_DATASET_PATH)
 
     while video.isOpened():
@@ -122,33 +205,37 @@ def test_video():
             break
 
         frame = cv2.resize(frame, (1280, 720))
-        aug, dilated, circles = recognize_sl_sign(frame)
+
+        aug, threshold, circle = recognize_sl_sign(frame)
 
         limit = 0
         prev_limit = 0
+                
+        if np.any(circle) and cv2.contourArea(circle) > area_thresh:
+            x, y, w, h = cv2.boundingRect(circle)
 
-        if np.any(circles):
-            for circle in circles[0]:
-                x, y, r = circle
+            tl = (x, y)
+            br = (x + w, y + h)
 
-                x_int = int(x)
-                y_int = int(y)
-                r_int = int(r)
+            sign_frame = frame[y : y + h, x : x + w]
+            
+            cv2.rectangle(aug, tl, br, (0, 255, 0), 1)
 
-                sign_frame = frame[y_int - r_int : y_int + r_int, 
-                                   x_int - r_int : x_int + r_int]
+            prev_limit = limit
+            limit = recognize_sign_digits(knn, cv2.cvtColor(sign_frame, cv2.COLOR_BGR2GRAY), sign_frame)
 
-                cv2.circle(aug, (x_int, y_int), r_int, (0, 255, 0), 1)
+            cv2.putText(aug, f"Max limit: {limit}", (tl[0], tl[1] - 10), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 1)
 
-                if np.any(sign_frame):
-                    prev_limit = limit
-                    limit = recognize_sign_digits(knn, cv2.cvtColor(sign_frame, cv2.COLOR_BGR2GRAY))    
+            print(f"Detection: {limit}")
 
         if limit != prev_limit:
-            print(f"Detected Limit: {limit}")
+            limit_value = deduce_value(limit)
+
+            if limit_value != NO_DETECT:
+                print(f"Detected Limit: {limit_value}")
 
         cv2.imshow("Video", aug)
-        cv2.imshow("Dilated", dilated)
+        cv2.imshow("Threshold", threshold)
     
         if cv2.waitKey(1000 // 60) == ord("e"):
             cv2.destroyAllWindows()
@@ -156,24 +243,7 @@ def test_video():
 
     video.release()
 
-def test_main():
-    img = cv2.imread("../samples/sl_sign2.jpg")
-    frame, dilated, circles = recognize_sl_sign(img)
-
-    for circle in circles[0]:
-        x, y, r = circle
-        x_int = int(x)
-        y_int = int(y)
-        r_int = int(r)
-
-        cv2.circle(frame, (x_int, y_int), r_int, (0, 255, 0), 2)
-
-    cv2.imshow("Image", frame)
-    cv2.imshow("Dilated", dilated)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
 if __name__ == "__main__":
     #test_main()
-    test_video()
+    #test_video_2()
+    pass

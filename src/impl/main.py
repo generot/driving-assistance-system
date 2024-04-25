@@ -5,7 +5,7 @@ import numpy as np
 import multiprocessing as mp
 
 from rpicam import camera_init, get_frame
-from traff_sign import train_knn
+from traff_sign import train_knn, TSR, NO_DETECT
 from detect import classify_car_rear, average_box_init, speed_limit_rec
 from stereo import project_to_3d, match_roi, get_world_dist
 
@@ -26,7 +26,9 @@ def main(v_speed):
     speed_to_keep = 0
 
     get_average_box = average_box_init()
-    #knn = train_knn()
+
+    knn = train_knn()
+    tsr = TSR(knn)
 
     def incr_speed(sign):
         nonlocal last_detected_sl
@@ -109,15 +111,22 @@ def main(v_speed):
 
             cv2.rectangle(car_frame, (avg[0], avg[1]), (avg[0] + avg[2], avg[1] + avg[3]), (0, 255, 0))
 
-        #last_detected_sl = speed_limit_rec(frame)
+        tl, br = tsr.detect_sl_on_frame(frame)
+
+        if tl != None:
+            cv2.rectangle(frame, tl, br, (0, 255, 255), 1)
+
+        if tsr.has_sl_changed():
+            last_detected_sl = tsr.get_limit()
+
+            if last_detected_sl != NO_DETECT:
+                cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", 
+                    (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        
 
         #check_distance(last_distance, v_speed.value)
         #check_distance(1000, 50)
         
-        '''
-        cv2.putText(frame, f"Speed Limit: {last_detected_sl} km / h", 
-            (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        '''
         cv2.putText(frame, f"Distance from front vehicle: {last_distance} cm", 
                     (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 1)
 

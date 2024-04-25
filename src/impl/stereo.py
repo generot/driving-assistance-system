@@ -2,45 +2,8 @@
 
 import cv2
 import numpy as np
-import math
 
 from triangulation import linear_LS_triangulation
-
-FPS = 20
-
-n_disp = 160
-block_sz = 21
-sigma = 1.5
-lmb = 8000
-
-def create_stereo_matcher():
-    left = cv2.StereoSGBM.create(numDisparities=n_disp, blockSize=block_sz)
-    left.setSpeckleRange(50)
-    left.setSpeckleWindowSize(15)
-    #left = cv2.StereoBM_create(numDisparities=n_disp, blockSize=block_sz)
-    right = cv2.ximgproc.createRightMatcher(left)
-
-    wls = cv2.ximgproc.createDisparityWLSFilter(left)
-    wls.setLambda(lmb)
-    wls.setSigmaColor(sigma)
-
-    return (left, right, wls)
-
-def compute_disparity(frame1, frame2):
-    gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-
-    left, right, wls = create_stereo_matcher()
-
-    left_disp = left.compute(gray1, gray2)
-    right_disp = right.compute(gray2, gray1)
-
-    disparity = wls.filter(left_disp, gray1, disparity_map_right=right_disp)
-    normalized = cv2.normalize(disparity, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-    norm = cv2.normalize(left_disp, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-
-    return (disparity, norm)
-
 
 def match_roi(img_to_match, roi_frame, detection_box):
     x, y, w, h = detection_box
